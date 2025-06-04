@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import familyTree from '../data/familyData';
+import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 
 // Helper to find path to a name in the tree
@@ -37,7 +37,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
     
     // Preload pop sound
     if (!popAudioRef.current) {
-      popAudioRef.current = new Audio('/pop.mp3');
+      popAudioRef.current = new Audio(`${import.meta.env.BASE_URL}pop.mp3`);
       popAudioRef.current.load();
     }
     
@@ -108,7 +108,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         )}
         <div className="node-photo" onClick={handlePhotoClick} style={{ cursor: node.photo ? 'zoom-in' : 'default' }}>
           {node.photo ? (
-            <img src={node.photo} alt={node.name} />
+            <img src={`${import.meta.env.BASE_URL}${node.photo.replace(/^\//, '')}`} alt={node.name} />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
