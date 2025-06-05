@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 
+// Helper to get the correct optimized image path
+const getOptimizedPhotoPath = (photo) => {
+  if (!photo) return '';
+  return `${import.meta.env.BASE_URL}optimized/${photo.replace(/^photos\//, '').replace(/^photos\//, '').replace(/^\//, '').replace(/\.(png|jpeg)$/i, '.jpg')}`;
+};
+
 // Helper to find path to a name in the tree
 function normalizeName(name) {
   if (!name) return '';
