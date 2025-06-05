@@ -1,7 +1,7 @@
 // src/data/familyData.js
 const familyTree = {
   name: "Kaduji Bhatt",
-  photo: "photos/kaduji.png",
+  photo: "photos/kaduji.jpg",
   birthDate: "12 Mar 1845",
   deathDate: "18 Jun 1910",
   children: [

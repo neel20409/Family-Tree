@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const publicDir = path.join(__dirname, 'public');
+const photosDir = path.join(__dirname, 'public', 'photos');
 const optimizedDir = path.join(__dirname, 'public', 'optimized');
 
 // Create optimized directory if it doesn't exist
@@ -34,13 +34,13 @@ const optimizeImage = async (inputPath, outputPath) => {
     }
 };
 
-// Process all images
+// Process all images in photosDir
 const processImages = async () => {
-    const files = fs.readdirSync(publicDir);
+    const files = fs.readdirSync(photosDir);
     
     for (const file of files) {
         if (file.match(/\.(jpg|jpeg|png)$/i)) {
-            const inputPath = path.join(publicDir, file);
+            const inputPath = path.join(photosDir, file);
             const outputPath = path.join(optimizedDir, file.replace(/\.(jpg|jpeg|png)$/i, '.jpg'));
             await optimizeImage(inputPath, outputPath);
         }
