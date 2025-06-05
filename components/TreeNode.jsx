@@ -94,7 +94,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         popAudioRef.current.currentTime = 0;
         popAudioRef.current.play();
       }
-      onPhotoClick(`${import.meta.env.BASE_URL}${node.photo ? node.photo.replace(/^\//, '') : ''}`);
+      onPhotoClick(`${import.meta.env.BASE_URL}optimized/${node.photo ? node.photo.replace(/^\//, '') : ''}`);
     }
   };
 
@@ -129,7 +129,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         )}
         <div className="node-photo" onClick={handlePhotoClick} style={{ cursor: node.photo ? 'zoom-in' : 'default' }}>
           {node.photo ? (
-            <img src={`${import.meta.env.BASE_URL}${node.photo.replace(/^\//, '')}`} alt={node.name} />
+            <img src={`${import.meta.env.BASE_URL}optimized/${node.photo.replace(/^\//, '')}`} alt={node.name} />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
@@ -614,7 +614,7 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="colorful-border-wrapper">
-              <img src={`${import.meta.env.BASE_URL}${modalImg ? modalImg.replace(/^\//, '') : ''}`} alt="Enlarged" className="modal-img" />
+              <img src={`${import.meta.env.BASE_URL}optimized/${modalImg ? modalImg.replace(/^\//, '') : ''}`} alt="Enlarged" className="modal-img" />
             </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
@@ -626,11 +626,11 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeSourceModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="source-modal-gallery">
-              <img src={`${import.meta.env.BASE_URL}source1.jpg`} alt="Source 1" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source1.jpg`)} />
-              <img src={`${import.meta.env.BASE_URL}source2.jpg`} alt="Source 2" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source2.jpg`)} />
-              <img src={`${import.meta.env.BASE_URL}source3.jpg`} alt="Source 3" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source3.jpg`)} />
-              <img src={`${import.meta.env.BASE_URL}source4.jpg`} alt="Source 4" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source4.jpg`)} />
-              <img src={`${import.meta.env.BASE_URL}source5.jpg`} alt="Source 5" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source5.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}optimized/source1.jpg`} alt="Source 1" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}optimized/source1.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}optimized/source2.jpg`} alt="Source 2" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}optimized/source2.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}optimized/source3.jpg`} alt="Source 3" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}optimized/source3.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}optimized/source4.jpg`} alt="Source 4" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}optimized/source4.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}optimized/source5.jpg`} alt="Source 5" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}optimized/source5.jpg`)} />
             </div>
             <button className="modal-close" onClick={closeSourceModal}>&times;</button>
           </div>
@@ -641,7 +641,7 @@ const FamilyTreeApp = () => {
       {enlargedSourceImg && (
         <div className="modal-overlay" onClick={closeEnlargedSourceImg}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <img src={enlargedSourceImg && !enlargedSourceImg.startsWith('http') ? `${import.meta.env.BASE_URL}${enlargedSourceImg.replace(/^\//, '')}` : enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
+            <img src={enlargedSourceImg && !enlargedSourceImg.startsWith('http') ? `${import.meta.env.BASE_URL}optimized/${enlargedSourceImg.replace(/^\//, '')}` : enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
             <button className="modal-close" onClick={closeEnlargedSourceImg}>&times;</button>
           </div>
         </div>
@@ -653,7 +653,7 @@ const FamilyTreeApp = () => {
           padding: 0;
           width: 100vw;
           min-height: 100vh;
-          background-image: url('${import.meta.env.BASE_URL}castle.jpg');
+          background-image: url('${import.meta.env.BASE_URL}optimized/castle.jpg');
           background-size: cover;
           background-position: center center;
           background-repeat: no-repeat;
@@ -672,7 +672,7 @@ const FamilyTreeApp = () => {
           min-height: 100vh;
           box-sizing: border-box;
           overflow-x: hidden;
-          background-image: url('${import.meta.env.BASE_URL}castle.jpg');
+          background-image: url('${import.meta.env.BASE_URL}optimized/castle.jpg');
           background-size: cover;
           background-position: center center;
           background-repeat: no-repeat;
