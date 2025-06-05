@@ -94,7 +94,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         popAudioRef.current.currentTime = 0;
         popAudioRef.current.play();
       }
-      onPhotoClick(`${import.meta.env.BASE_URL}optimized/${node.photo ? node.photo.replace(/^\//, '') : ''}`);
+      onPhotoClick(getOptimizedPhotoPath(node.photo));
     }
   };
 
@@ -129,7 +129,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         )}
         <div className="node-photo" onClick={handlePhotoClick} style={{ cursor: node.photo ? 'zoom-in' : 'default' }}>
           {node.photo ? (
-            <img src={`${import.meta.env.BASE_URL}optimized/${node.photo.replace(/^\//, '')}`} alt={node.name} />
+            <img src={getOptimizedPhotoPath(node.photo)} alt={node.name} />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
@@ -614,7 +614,7 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="colorful-border-wrapper">
-              <img src={`${import.meta.env.BASE_URL}optimized/${modalImg ? modalImg.replace(/^\//, '') : ''}`} alt="Enlarged" className="modal-img" />
+              <img src={modalImg ? getOptimizedPhotoPath(modalImg) : ''} alt="Enlarged" className="modal-img" />
             </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
@@ -641,7 +641,7 @@ const FamilyTreeApp = () => {
       {enlargedSourceImg && (
         <div className="modal-overlay" onClick={closeEnlargedSourceImg}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <img src={enlargedSourceImg && !enlargedSourceImg.startsWith('http') ? `${import.meta.env.BASE_URL}optimized/${enlargedSourceImg.replace(/^\//, '')}` : enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
+            <img src={enlargedSourceImg && !enlargedSourceImg.startsWith('http') ? getOptimizedPhotoPath(enlargedSourceImg) : enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
             <button className="modal-close" onClick={closeEnlargedSourceImg}>&times;</button>
           </div>
         </div>
