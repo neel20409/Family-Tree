@@ -23,31 +23,37 @@ function findPathByName(node, name, path = []) {
   return null;
 }
 
+const BOX_WIDTH = 220;
+
 const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [], highlightName, activePath = [], onMaxDepth }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [glow, setGlow] = useState(false);
   const popAudioRef = useRef(null);
   const hasChildren = node.children && node.children.length > 0;
-  
+  const childrenCount = node.children ? node.children.length : 0;
+  const containerRef = useRef(null);
+  const [lineWidth, setLineWidth] = useState(0);
+  const [startOffset, setStartOffset] = useState(0);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, level * 150);
-    
+
     // Preload pop sound
     if (!popAudioRef.current) {
       popAudioRef.current = new Audio(`${import.meta.env.BASE_URL}pop.mp3`);
       popAudioRef.current.load();
     }
-    
+
     // Expand if in path
     if (expandPath && expandPath[level] === node.name) {
       setIsExpanded(true);
     } else if (expandPath && expandPath.length > 0) {
       setIsExpanded(false);
     }
-    
+
     return () => clearTimeout(timer);
   }, [level, expandPath, node.name]);
 
@@ -57,6 +63,21 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
       onMaxDepth(level);
     }
   }, [isExpanded, level, onMaxDepth]);
+
+  // Horizontal connector calculation
+  useEffect(() => {
+    if (containerRef.current && childrenCount > 1) {
+      const children = Array.from(containerRef.current.children);
+      const first = children[0];
+      const last = children[children.length - 1];
+      if (first && last) {
+        const left = first.offsetLeft + BOX_WIDTH / 2;
+        const right = last.offsetLeft + BOX_WIDTH / 2;
+        setLineWidth(right - left);
+        setStartOffset(left);
+      }
+    }
+  }, [isExpanded, childrenCount, node.children]);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -73,7 +94,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         popAudioRef.current.currentTime = 0;
         popAudioRef.current.play();
       }
-      onPhotoClick(node.photo);
+      onPhotoClick(`${import.meta.env.BASE_URL}${node.photo.replace(/^\//, '')}`);
     }
   };
 
@@ -128,15 +149,67 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         </div>
       </div>
 
+      {/* Connection lines */}
       {isExpanded && hasChildren && (
-        <div className="children-container">
-          <div className="children-inner">
-            {node.children.length > 1 && (
-              <div className="horizontal-connector" />
-            )}
+        <div style={{ position: "relative", display: "inline-block", width: "auto" }}>
+          {/* Vertical line from parent to horizontal connector */}
+          <div
+            style={{
+              width: 0,
+              height: 20,
+              borderLeft: `2px solid ${getNodeColors(level).border}`,
+              margin: "0 auto",
+              position: "absolute",
+              left: "50%",
+              top: -20,
+              transform: "translateX(-50%)",
+              zIndex: 2,
+            }}
+          />
+          {/* Horizontal connector above children */}
+          {childrenCount > 1 && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: startOffset,
+                width: lineWidth,
+                borderTop: `2px solid ${getNodeColors(level).border}`,
+                zIndex: 1,
+                height: 0,
+              }}
+            />
+          )}
+          <div
+            className="flex flex-row gap-8 items-start justify-center"
+            ref={containerRef}
+            style={{
+              marginTop: childrenCount > 1 ? 20 : 0,
+              display: "inline-flex",
+              position: "relative",
+            }}
+          >
             {node.children.map((child, index) => (
-              <div key={`${child.name}-${index}`} className="child-wrapper">
-                <div className="connector-line" />
+              <div
+                key={`${child.name}-${index}`}
+                className="flex flex-col items-center relative"
+                style={{ minWidth: BOX_WIDTH }}
+              >
+                {/* Vertical line from horizontal to child */}
+                {childrenCount > 1 && (
+                  <div
+                    style={{
+                      width: 0,
+                      height: 20,
+                      borderLeft: `2px solid ${getNodeColors(level).border}`,
+                      position: "absolute",
+                      top: -20,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      zIndex: 2,
+                    }}
+                  />
+                )}
                 <TreeNode 
                   node={child}
                   level={level + 1}
@@ -541,7 +614,7 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="colorful-border-wrapper">
-              <img src={modalImg} alt="Enlarged" className="modal-img" />
+              <img src={`${import.meta.env.BASE_URL}${modalImg.replace(/^\//, '')}`} alt="Enlarged" className="modal-img" />
             </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
@@ -553,11 +626,11 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeSourceModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="source-modal-gallery">
-              <img src="/source1.jpg" alt="Source 1" className="source-modal-img" onClick={() => handleSourceImgClick('/source1.jpg')} />
-              <img src="/source2.jpg" alt="Source 2" className="source-modal-img" onClick={() => handleSourceImgClick('/source2.jpg')} />
-              <img src="/source3.jpg" alt="Source 3" className="source-modal-img" onClick={() => handleSourceImgClick('/source3.jpg')} />
-              <img src="/source4.jpg" alt="Source 4" className="source-modal-img" onClick={() => handleSourceImgClick('/source4.jpg')} />
-              <img src="/source5.jpg" alt="Source 5" className="source-modal-img" onClick={() => handleSourceImgClick('/source5.jpg')} />
+              <img src={`${import.meta.env.BASE_URL}source1.jpg`} alt="Source 1" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source1.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}source2.jpg`} alt="Source 2" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source2.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}source3.jpg`} alt="Source 3" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source3.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}source4.jpg`} alt="Source 4" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source4.jpg`)} />
+              <img src={`${import.meta.env.BASE_URL}source5.jpg`} alt="Source 5" className="source-modal-img" onClick={() => handleSourceImgClick(`${import.meta.env.BASE_URL}source5.jpg`)} />
             </div>
             <button className="modal-close" onClick={closeSourceModal}>&times;</button>
           </div>
@@ -568,7 +641,7 @@ const FamilyTreeApp = () => {
       {enlargedSourceImg && (
         <div className="modal-overlay" onClick={closeEnlargedSourceImg}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <img src={enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
+            <img src={enlargedSourceImg && !enlargedSourceImg.startsWith('http') ? `${import.meta.env.BASE_URL}${enlargedSourceImg.replace(/^\//, '')}` : enlargedSourceImg} alt="Enlarged Source" className="modal-img" />
             <button className="modal-close" onClick={closeEnlargedSourceImg}>&times;</button>
           </div>
         </div>
@@ -580,7 +653,7 @@ const FamilyTreeApp = () => {
           padding: 0;
           width: 100vw;
           min-height: 100vh;
-          background-image: url('/castle.jpg');
+          background-image: url('${import.meta.env.BASE_URL}castle.jpg');
           background-size: cover;
           background-position: center center;
           background-repeat: no-repeat;
@@ -599,7 +672,7 @@ const FamilyTreeApp = () => {
           min-height: 100vh;
           box-sizing: border-box;
           overflow-x: hidden;
-          background-image: url('/castle.jpg');
+          background-image: url('${import.meta.env.BASE_URL}castle.jpg');
           background-size: cover;
           background-position: center center;
           background-repeat: no-repeat;

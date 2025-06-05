@@ -1,5 +1,6 @@
-"homepage": "https://your-github-username.github.io/your-repo-name",{
-  "name": "family-tree",
+{
+  "name": "familytree",
+  "homepage": "https://neel20409.github.io/familytree",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,9 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "predeploy": "npm run build",
-  "deploy": "gh-pages -d build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@react-spring/web": "^10.0.1",
@@ -30,7 +29,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "vite": "^6.3.5"
-  },
-  "homepage": "https://your-github-username.github.io/your-repo-name",
+  }
+  
 
 }
