@@ -94,7 +94,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         popAudioRef.current.currentTime = 0;
         popAudioRef.current.play();
       }
-      onPhotoClick(`${import.meta.env.BASE_URL}${node.photo.replace(/^\//, '')}`);
+      onPhotoClick(`${import.meta.env.BASE_URL}${node.photo ? node.photo.replace(/^\//, '') : ''}`);
     }
   };
 
@@ -614,7 +614,7 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="colorful-border-wrapper">
-              <img src={`${import.meta.env.BASE_URL}${modalImg.replace(/^\//, '')}`} alt="Enlarged" className="modal-img" />
+              <img src={`${import.meta.env.BASE_URL}${modalImg ? modalImg.replace(/^\//, '') : ''}`} alt="Enlarged" className="modal-img" />
             </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
@@ -776,7 +776,7 @@ const FamilyTreeApp = () => {
           justify-content: center;
           min-width: fit-content;
           width: auto;
-          max-width: 95vw;
+          max-width: 100vw;
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(5px);
           border-radius: 25px;
@@ -785,7 +785,7 @@ const FamilyTreeApp = () => {
           height: auto;
           min-height: 85vh;
           position: relative;
-          overflow: auto;
+          overflow-x: auto;
           margin: 0 auto;
         }
 
@@ -816,9 +816,8 @@ const FamilyTreeApp = () => {
 
           .tree-container {
             padding: 15px;
-            max-width: 100%;
-            margin: 0;
-            border-radius: 15px;
+            max-width: 100vw;
+            min-width: 0;
           }
 
           h1 {
