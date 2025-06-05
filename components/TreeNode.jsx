@@ -135,7 +135,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         )}
         <div className="node-photo" onClick={handlePhotoClick} style={{ cursor: node.photo ? 'zoom-in' : 'default' }}>
           {node.photo ? (
-            <img src={getOptimizedPhotoPath(node.photo)} alt={node.name} />
+            <img src={getOptimizedPhotoPath(node.photo)} alt={node.name} style={{ border: '2px solid red', background: 'yellow', width: '85px', height: '85px', objectFit: 'cover', borderRadius: '50%' }} />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
