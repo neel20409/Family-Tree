@@ -438,4 +438,5 @@ const FamilyTreeApp = () => {
   );
 };
 
+export { TreeNode };
 export default FamilyTreeApp;
