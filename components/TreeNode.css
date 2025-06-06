@@ -13,10 +13,11 @@
   min-width: 0;
   overflow-x: auto;
   box-sizing: border-box;
-  background: white;
   position: relative;
   overflow-x: hidden;
   padding: 2rem;
+  padding-bottom: 40px;
+  /* background: white; */ /* Commented out to allow castle background image to show */
 }
 
 .tree-container {
