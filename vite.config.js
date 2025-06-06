@@ -5,7 +5,6 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -14,7 +13,11 @@ export default defineConfig({
         assetFileNames: 'assets/[name].[hash][extname]'
       }
     },
-    copyPublicDir: true
+    copyPublicDir: true,
+    // Vercel optimizations
+    minify: 'terser',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000
   },
   publicDir: 'public',
   resolve: {
