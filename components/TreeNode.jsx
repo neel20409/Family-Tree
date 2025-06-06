@@ -5,7 +5,20 @@ import confetti from 'canvas-confetti';
 // Helper to get the correct optimized image path
 const getOptimizedPhotoPath = (photo) => {
   if (!photo) return '';
-  return `${import.meta.env.BASE_URL}optimized/${photo.replace(/^photos\//, '').replace(/^photos\//, '').replace(/^\//, '').replace(/\.(png|jpeg)$/i, '.jpg')}`;
+  try {
+    // Normalize the path by removing any leading/trailing slashes and photos/ prefix
+    const normalizedPath = photo.replace(/^\/?photos\//, '').replace(/^\//, '');
+    // Convert to lowercase for case-insensitive matching
+    const lowerPath = normalizedPath.toLowerCase();
+    // Convert to jpg and ensure proper path construction
+    const optimizedPath = lowerPath.replace(/\.(png|jpeg)$/i, '.jpg');
+    // Always use '/optimized/filename.jpg' (with leading slash)
+    const fullPath = `/optimized/${optimizedPath}`;
+    return fullPath;
+  } catch (error) {
+    console.error('Error processing photo path:', error);
+    return '';
+  }
 };
 
 // Helper to find path to a name in the tree
@@ -35,6 +48,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [glow, setGlow] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const popAudioRef = useRef(null);
   const hasChildren = node.children && node.children.length > 0;
   const childrenCount = node.children ? node.children.length : 0;
@@ -58,6 +72,16 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
       setIsExpanded(true);
     } else if (expandPath && expandPath.length > 0) {
       setIsExpanded(false);
+    }
+
+    // Add image path logging
+    if (node.photo) {
+      const optimizedPath = getOptimizedPhotoPath(node.photo);
+      console.log(`Image path for ${node.name}:`, {
+        original: node.photo,
+        optimized: optimizedPath,
+        baseUrl: import.meta.env.BASE_URL
+      });
     }
 
     return () => clearTimeout(timer);
@@ -90,18 +114,10 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
     setIsExpanded(!isExpanded);
   };
 
-  const handlePhotoClick = (e) => {
-    e.stopPropagation();
-    if (node.photo && onPhotoClick) {
-      setGlow(true);
-      setTimeout(() => setGlow(false), 1000);
-      // Play pop sound instantly
-      if (popAudioRef.current) {
-        popAudioRef.current.currentTime = 0;
-        popAudioRef.current.play();
-      }
-      onPhotoClick(getOptimizedPhotoPath(node.photo));
-    }
+  const handlePhotoClick = (img) => {
+    setModalImg(getOptimizedPhotoPath(img));
+    setModalOpen(true);
+    confettiFired.current = false;
   };
 
   const getNodeColors = (level) => {
@@ -133,9 +149,42 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
             {isExpanded ? '−' : '+'}
           </span>
         )}
-        <div className="node-photo" onClick={handlePhotoClick} style={{ cursor: node.photo ? 'zoom-in' : 'default' }}>
+        <div 
+          className={`node-photo ${imageLoadError ? 'image-error' : ''}`} 
+          onClick={e => {
+            e.stopPropagation();
+            if (node.photo) handlePhotoClick(node.photo);
+          }} 
+          style={{ cursor: node.photo ? 'zoom-in' : 'default' }}
+        >
           {node.photo ? (
-            <img src={getOptimizedPhotoPath(node.photo)} alt={node.name} style={{ border: '2px solid red', background: 'yellow', width: '85px', height: '85px', objectFit: 'cover', borderRadius: '50%' }} />
+            <img 
+              src={getOptimizedPhotoPath(node.photo)} 
+              alt={node.name} 
+              style={{ 
+                border: '2px solid red', 
+                background: 'yellow', 
+                width: '85px', 
+                height: '85px', 
+                objectFit: 'cover', 
+                borderRadius: '50%',
+                display: imageLoadError ? 'none' : 'block'
+              }}
+              onError={(e) => {
+                console.error(`Failed to load image for ${node.name}:`, {
+                  error: e,
+                  photo: node.photo,
+                  optimizedPath: getOptimizedPhotoPath(node.photo),
+                  baseUrl: import.meta.env.BASE_URL
+                });
+                setImageLoadError(true);
+                e.target.style.display = 'none';
+              }}
+              onLoad={() => {
+                console.log(`Successfully loaded image for ${node.name}`);
+                setImageLoadError(false);
+              }}
+            />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
@@ -517,6 +566,17 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
             font-size: 9px;
           }
         }
+
+        .node-photo.image-error {
+          background: rgba(255, 0, 0, 0.1);
+          border: 2px dashed #ff0000;
+        }
+        
+        .node-photo.image-error::after {
+          content: '⚠️';
+          font-size: 24px;
+          color: #ff0000;
+        }
       `}</style>
     </div>
   );
@@ -540,7 +600,7 @@ const FamilyTreeApp = () => {
   };
 
   const handlePhotoClick = (img) => {
-    setModalImg(img);
+    setModalImg(getOptimizedPhotoPath(img));
     setModalOpen(true);
     confettiFired.current = false;
   };
@@ -620,7 +680,22 @@ const FamilyTreeApp = () => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
             <div className="colorful-border-wrapper">
-              <img src={modalImg ? getOptimizedPhotoPath(modalImg) : ''} alt="Enlarged" className="modal-img" />
+              <img 
+                src={modalImg} 
+                alt="Enlarged" 
+                className="modal-img"
+                style={{ 
+                  maxWidth: '90vw', 
+                  maxHeight: '80vh', 
+                  objectFit: 'contain',
+                  display: 'block',
+                  width: 'auto',
+                  height: 'auto',
+                  border: '4px solid #ff8ee6',
+                  background: '#fff8',
+                  zIndex: 10001
+                }}
+              />
             </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>

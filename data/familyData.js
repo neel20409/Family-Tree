@@ -322,30 +322,30 @@ const familyTree = {
     }
     ,{
       name:"vancharam Bhatt",
-      photo:"/photos/vancharam.jpg",
+      photo:"photos/vancharam.jpg",
       birthDate:"10 May 1900",
       deathDate:"15 Dec 1975",
       children:[
         {
           name:"Laskhmanram Bhatt",
-          photo:"/photos/laskhmanram.jpg",
+          photo:"photos/laskhmanram.jpg",
           birthDate:"20 Jun 1930",
           deathDate:"25 Sep 2005",
           children:[
             {
               name:"Mahatmaram Bhatt",
-              photo:"/photos/mahatmaram.jpg",
+              photo:"photos/mahatmaram.jpg",
               birthDate:"15 Jul 1955",
               deathDate:"20 Sep 2025",
               children:[{
                 name:"Narayan bhatt",
-                photo:"/photos/narayan.jpg",
+                photo:"photos/narayan.jpg",
                 birthDate:"15 Aug 1980",
                 deathDate:"20 Sep 2055"
               }]
             },{
               name:"Randheer Bhatt",
-              photo:"/photos/randheer.jpg",
+              photo:"photos/randheer.jpg",
               birthDate:"25 Aug 1933",
               deathDate:"10 Nov 2010"
             }
