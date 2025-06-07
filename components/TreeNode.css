@@ -30,6 +30,55 @@
   margin: 40px auto;
   min-width: fit-content;
   max-width: 95vw;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #39fff6 rgba(255,255,255,0.1);
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+/* Modern scrollbar styling */
+.tree-container::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.tree-container::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background: #39fff6;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+
+.tree-container::-webkit-scrollbar-thumb:hover {
+  background: #2dd4bf;
+}
+
+/* Add scroll buttons */
+.tree-container::before,
+.tree-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tree-container::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+}
+
+.tree-container::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0,0,0,0.2), transparent);
 }
 
 .heading-center {
@@ -158,6 +207,7 @@
   transform: translateY(20px);
   transition: all 0.3s cubic-bezier(.4,2,.6,1);
   min-width: max-content;
+  flex-shrink: 0;
 }
 .tree-node.visible {
   opacity: 1;
@@ -644,4 +694,42 @@
 
 .source-modal-content::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
+}
+
+/* Add scroll buttons */
+.scroll-button {
+  position: fixed;
+  bottom: 20px;
+  background: rgba(57, 255, 246, 0.2);
+  border: 2px solid #39fff6;
+  color: #39fff6;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+.scroll-button:hover {
+  background: rgba(57, 255, 246, 0.3);
+  transform: scale(1.1);
+}
+
+.scroll-left {
+  left: 20px;
+}
+
+.scroll-right {
+  right: 20px;
+}
+
+.scroll-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
 } 

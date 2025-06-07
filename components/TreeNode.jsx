@@ -245,6 +245,7 @@ const FamilyTreeApp = () => {
   const [highlightName, setHighlightName] = useState('');
   const [activePath, setActivePath] = useState([]);
   const [maxExpandedDepth, setMaxExpandedDepth] = useState(0);
+  const treeContainerRef = useRef(null);
 
   const sources = [
     {
@@ -347,6 +348,21 @@ const FamilyTreeApp = () => {
     setSourceModalOpen(false);
   };
 
+  const handleScroll = (direction) => {
+    if (treeContainerRef.current) {
+      const scrollAmount = 300; // Adjust this value to control scroll distance
+      const currentScroll = treeContainerRef.current.scrollLeft;
+      const newScroll = direction === 'left' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      treeContainerRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className="app-container">
       <div className="source-btn-container">
@@ -368,9 +384,19 @@ const FamilyTreeApp = () => {
       <div className="heading-center">
         <h1 className="neon-heading">Roots of the Bhatt Family</h1>
       </div>
-      <div className="tree-container">
+      <div className="tree-container" ref={treeContainerRef}>
         <TreeNode onPhotoClick={handlePhotoClick} expandPath={expandPath} highlightName={highlightName} activePath={activePath} onMaxDepth={handleMaxDepth} />
       </div>
+      <button className="scroll-button scroll-left" onClick={() => handleScroll('left')}>
+        <svg viewBox="0 0 24 24">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </button>
+      <button className="scroll-button scroll-right" onClick={() => handleScroll('right')}>
+        <svg viewBox="0 0 24 24">
+          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </svg>
+      </button>
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
