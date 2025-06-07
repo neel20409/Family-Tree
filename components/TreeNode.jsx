@@ -45,40 +45,17 @@ const getNodeColors = (level) => {
   return colors[Math.min(level, colors.length - 1)];
 };
 
-const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [], highlightName, activePath = [], onMaxDepth, maxExpandedDepth = 2 }) => {
+const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [], highlightName, activePath = [], onMaxDepth }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [glow, setGlow] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const popAudioRef = useRef(null);
   const hasChildren = node.children && node.children.length > 0;
   const childrenCount = node.children ? node.children.length : 0;
   const containerRef = useRef(null);
   const [lineWidth, setLineWidth] = useState(0);
   const [startOffset, setStartOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const treeContainerRef = useRef(null);
-  const imgRef = useRef(null);
-
-  // Preload image when component mounts
-  useEffect(() => {
-    if (node.photo) {
-      const img = new Image();
-      img.src = getOptimizedPhotoPath(node.photo);
-      img.onload = () => {
-        setImageLoading(false);
-        setImageLoaded(true);
-      };
-      img.onerror = () => {
-        setImageLoading(false);
-        setImageLoadError(true);
-      };
-    }
-  }, [node.photo]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -92,9 +69,6 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
       setIsExpanded(true);
     } else if (expandPath && expandPath.length > 0) {
       setIsExpanded(false);
-    }
-    if (level === 0) {
-      setIsExpanded(true);
     }
     return () => clearTimeout(timer);
   }, [level, expandPath, node.name]);
@@ -119,72 +93,16 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
     }
   }, [isExpanded, childrenCount, node.children]);
 
-  const handleToggle = (e) => {
+  const handleClick = (e) => {
     e.stopPropagation();
     setIsExpanded(!isExpanded);
   };
 
-  const handleNodeClick = () => {
-    if (onPhotoClick) {
-      onPhotoClick(node);
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setStartX(e.pageX - treeContainerRef.current.offsetLeft);
-    setScrollLeft(treeContainerRef.current.scrollLeft);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - treeContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    treeContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - treeContainerRef.current.offsetLeft);
-    setScrollLeft(treeContainerRef.current.scrollLeft);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    const x = e.touches[0].pageX - treeContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    treeContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleScroll = (direction) => {
-    if (treeContainerRef.current) {
-      const scrollAmount = 300; // Adjust this value to control scroll distance
-      const currentScroll = treeContainerRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      
-      treeContainerRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   return (
-    <div className={`tree-node ${level === 0 ? 'root-node' : ''} ${isVisible ? 'visible' : ''}`} style={{ marginLeft: `${level * 20}px` }}>
+    <div className={`tree-node ${level === 0 ? 'root-node' : ''} ${isVisible ? 'visible' : ''}`}>
       <div 
         className={`node-box ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''} ${glow ? 'glow' : ''} ${highlightName === node.name ? 'highlighted' : ''} ${activePath && activePath.includes(node.name) ? 'active-path' : ''}`}
-        onClick={handleNodeClick}
+        onClick={handleClick}
         style={{
           background: getNodeColors(level).bg,
           borderColor: getNodeColors(level).border,
@@ -192,45 +110,36 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         }}
       >
         {hasChildren && (
-          <button className="toggle-btn" onClick={handleToggle}>
+          <span className="node-indicator">
             {isExpanded ? '−' : '+'}
-          </button>
+          </span>
         )}
         <div 
-          className={`node-photo ${imageLoadError ? 'image-error' : ''} ${imageLoading ? 'image-loading' : ''}`} 
+          className={`node-photo ${imageLoadError ? 'image-error' : ''}`} 
+          onClick={e => {
+            e.stopPropagation();
+            if (popAudioRef.current) {
+              popAudioRef.current.currentTime = 0;
+              popAudioRef.current.play();
+            }
+            if (node.photo && onPhotoClick) onPhotoClick(getOptimizedPhotoPath(node.photo));
+          }} 
           style={{ cursor: node.photo ? 'zoom-in' : 'default' }}
         >
           {node.photo ? (
-            <>
-              {imageLoading && (
-                <div className="image-loading-spinner">
-                  <div className="spinner"></div>
-                </div>
-              )}
-              <img 
-                ref={imgRef}
-                src={getOptimizedPhotoPath(node.photo)} 
-                alt={node.name} 
-                loading="lazy"
-                style={{ 
-                  width: '85px', 
-                  height: '85px', 
-                  objectFit: 'cover', 
-                  borderRadius: '50%',
-                  display: imageLoadError ? 'none' : 'block',
-                  opacity: imageLoaded ? 1 : 0,
-                  transition: 'opacity 0.3s ease-in-out'
-                }}
-                onError={() => {
-                  setImageLoadError(true);
-                  setImageLoading(false);
-                }}
-                onLoad={() => {
-                  setImageLoaded(true);
-                  setImageLoading(false);
-                }}
-              />
-            </>
+            <img 
+              src={getOptimizedPhotoPath(node.photo)} 
+              alt={node.name} 
+              style={{ 
+                width: '85px', 
+                height: '85px', 
+                objectFit: 'cover', 
+                borderRadius: '50%',
+                display: imageLoadError ? 'none' : 'block'
+              }}
+              onError={() => setImageLoadError(true)}
+              onLoad={() => setImageLoadError(false)}
+            />
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
@@ -250,20 +159,63 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         </div>
       </div>
       {isExpanded && hasChildren && (
-        <div
-          ref={treeContainerRef}
-          className="tree-container"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+        <div style={{ position: "relative", display: "inline-block", width: "auto" }}>
+          <div
+            style={{
+              width: 0,
+              height: 20,
+              borderLeft: `2px solid #3b82f6`,
+              margin: "0 auto",
+              position: "absolute",
+              left: "50%",
+              top: -20,
+              transform: "translateX(-50%)",
+              zIndex: 2,
+            }}
+          />
+          {childrenCount > 1 && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: startOffset,
+                width: lineWidth,
+                borderTop: `2px solid #3b82f6`,
+                zIndex: 1,
+                height: 0,
+              }}
+            />
+          )}
+          <div
+            className="flex flex-row gap-8 items-start justify-center"
+            ref={containerRef}
+            style={{
+              marginTop: childrenCount > 1 ? 20 : 0,
+              display: "inline-flex",
+              position: "relative",
+            }}
           >
             {node.children.map((child, index) => (
-            <TreeNode
+              <div
                 key={`${child.name}-${index}`}
+                className="flex flex-col items-center relative"
+                style={{ minWidth: BOX_WIDTH }}
+              >
+                {childrenCount > 1 && (
+                  <div
+                    style={{
+                      width: 0,
+                      height: 20,
+                      borderLeft: `2px solid #3b82f6`,
+                      position: "absolute",
+                      top: -20,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      zIndex: 2,
+                    }}
+                  />
+                )}
+                <TreeNode 
                   node={child}
                   level={level + 1}
                   onPhotoClick={onPhotoClick}
@@ -271,21 +223,12 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
                   highlightName={highlightName}
                   activePath={activePath}
                   onMaxDepth={onMaxDepth}
-              maxExpandedDepth={maxExpandedDepth}
                 />
+              </div>
             ))}
+          </div>
         </div>
       )}
-      <button className="scroll-button scroll-left" onClick={() => handleScroll('left')}>
-        <svg viewBox="0 0 24 24">
-          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-        </svg>
-      </button>
-      <button className="scroll-button scroll-right" onClick={() => handleScroll('right')}>
-        <svg viewBox="0 0 24 24">
-          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-        </svg>
-      </button>
     </div>
   );
 };
@@ -405,6 +348,21 @@ const FamilyTreeApp = () => {
     setSourceModalOpen(false);
   };
 
+  const handleScroll = (direction) => {
+    if (treeContainerRef.current) {
+      const scrollAmount = 300; // Adjust this value to control scroll distance
+      const currentScroll = treeContainerRef.current.scrollLeft;
+      const newScroll = direction === 'left' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      treeContainerRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className="app-container">
       <div className="source-btn-container">
@@ -427,14 +385,7 @@ const FamilyTreeApp = () => {
         <h1 className="neon-heading">Roots of the Bhatt Family</h1>
       </div>
       <div className="tree-container" ref={treeContainerRef}>
-        <TreeNode 
-          expandPath={expandPath} 
-          highlightName={highlightName} 
-          activePath={activePath} 
-          onMaxDepth={handleMaxDepth} 
-          maxExpandedDepth={maxExpandedDepth}
-          onPhotoClick={handlePhotoClick}
-        />
+        <TreeNode onPhotoClick={handlePhotoClick} expandPath={expandPath} highlightName={highlightName} activePath={activePath} onMaxDepth={handleMaxDepth} />
       </div>
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>

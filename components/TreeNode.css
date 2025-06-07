@@ -32,7 +32,7 @@
   max-width: 95vw;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: #39fff6 rgba(255,255,255,0.1);
+  scrollbar-color: transparent transparent;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   position: relative;
@@ -42,42 +42,149 @@
 .tree-container::-webkit-scrollbar {
   height: 8px;
   width: 8px;
-}
-
-.tree-container::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
+  background: transparent;
 }
 
 .tree-container::-webkit-scrollbar-thumb {
-  background: #39fff6;
+  background: transparent;
   border-radius: 4px;
-  border: 2px solid rgba(255,255,255,0.1);
+  transition: background 0.3s, opacity 0.3s;
 }
 
-.tree-container::-webkit-scrollbar-thumb:hover {
-  background: #2dd4bf;
+.tree-container:hover::-webkit-scrollbar-thumb,
+.tree-container:active::-webkit-scrollbar-thumb,
+.tree-container:focus::-webkit-scrollbar-thumb {
+  background: rgba(57,255,246,0.08); /* very faint cyan */
 }
 
-.tree-container::before,
-.tree-container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 60px;
-  pointer-events: none;
-  z-index: 2;
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.tree-container::before {
-  left: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+/* For Firefox */
+.tree-container {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.tree-container:hover,
+.tree-container:active,
+.tree-container:focus {
+  scrollbar-color: rgba(57,255,246,0.08) transparent;
 }
 
-.tree-container::after {
-  right: 0;
-  background: linear-gradient(to left, rgba(0,0,0,0.2), transparent);
+.heading-center {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.neon-heading {
+  font-family: 'Dancing Script', cursive, 'Brush Script MT', 'Playfair Display', serif;
+  font-size: 2.8rem;
+  color: #39fff6;
+  text-shadow:
+    0 0 8px #39fff6,
+    0 0 16px #39fff6,
+    0 0 32px #39fff6,
+    0 0 64px #0ff,
+    0 0 2px #fff;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.6);
+  animation: neonPulse 1.5s infinite alternate;
+  margin: 20px 0 40px 0;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 90vw;
+}
+@keyframes neonPulse {
+  0% {
+    text-shadow:
+      0 0 8px #39fff6,
+      0 0 16px #39fff6,
+      0 0 32px #39fff6,
+      0 0 64px #0ff,
+      0 0 2px #fff;
+    color: #39fff6;
+  }
+  100% {
+    text-shadow:
+      0 0 16px #fff,
+      0 0 32px #0ff,
+      0 0 64px #39fff6,
+      0 0 128px #0ff,
+      0 0 4px #fff;
+    color: #fff;
+  }
+}
+
+.search-bar-topright {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 100;
+  background: none;
+}
+.search-bar {
+  padding: 8px 18px;
+  border-radius: 18px;
+  border: 2px solid #39fff6;
+  font-size: 1.1rem;
+  width: 180px;
+  outline: none;
+  background: rgba(30,30,30,0.7);
+  color: #fff;
+  box-shadow: 0 0 12px #39fff6, 0 0 2px #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.search-bar:focus {
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 16px #39fff6, 0 0 4px #fff;
+}
+
+.source-btn-container {
+  position: fixed;
+  left: 24px;
+  top: 24px;
+  z-index: 101;
+  display: flex;
+  align-items: flex-start;
+  width: 120px;
+  justify-content: flex-start;
+}
+.source-btn {
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  font-size: 1.1rem;
+  color: #222;
+  background: linear-gradient(135deg, #39fff6 0%, #ff8ee6 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 10px 28px;
+  margin-left: 0;
+  margin-top: 0;
+  cursor: pointer;
+  box-shadow:
+    0 0 8px #39fff6,
+    0 0 16px #ff8ee6,
+    0 0 32px #39fff6,
+    0 0 64px #ff8ee6;
+  animation: neonPulse 1.5s infinite alternate;
+  transition: filter 0.2s, background 0.2s;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px #fff, 0 1px 1px #fff;
+  border: 2px solid #fff;
+}
+.source-btn:hover {
+  filter: brightness(1.08) drop-shadow(0 0 8px #ff8ee6);
+  background: linear-gradient(135deg, #ff8ee6 0%, #39fff6 100%);
+  color: #222;
+  text-shadow: 0 2px 4px #fff, 0 1px 1px #fff;
 }
 
 .tree-node {
@@ -92,24 +199,10 @@
   transition: all 0.3s cubic-bezier(.4,2,.6,1);
   min-width: max-content;
   flex-shrink: 0;
-  user-select: none;
-  -webkit-user-select: none;
 }
-
-.tree-container:active {
-  cursor: grabbing;
-}
-
-@supports (-webkit-touch-callout: none) {
-  .tree-container {
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    scroll-snap-points-x: repeat(100%);
-  }
-  
-  .tree-node {
-    scroll-snap-align: start;
-  }
+.tree-node.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .node-box {
@@ -168,51 +261,7 @@
   margin-bottom: 8px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
   transition: all 0.3s cubic-bezier(.4,2,.6,1);
-  position: relative;
 }
-
-.node-photo.image-loading {
-  background: rgba(255,255,255,0.1);
-}
-
-.image-loading-spinner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-}
-
-.spinner {
-  width: 100%;
-  height: 100%;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  border-top-color: #39fff6;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.node-photo.image-error {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
-}
-
-.node-photo.image-error::after {
-  content: '⚠️';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-}
-
 .node-photo img {
   width: 100%;
   height: 100%;
@@ -639,39 +688,39 @@
 }
 
 /* Add scroll buttons */
-.scroll-button {
-  position: fixed;
-  bottom: 20px;
-  background: rgba(57, 255, 246, 0.2);
-  border: 2px solid #39fff6;
-  color: #39fff6;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 100;
-  backdrop-filter: blur(4px);
-  transition: all 0.3s ease;
+/* .scroll-button, .scroll-left, .scroll-right { ... } */
+
+/* Remove scroll button styles */
+/* .scroll-button, .scroll-left, .scroll-right { ... } */
+
+.tree-container::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background: transparent;
+  transition: background 0.3s;
+}
+.tree-container:hover::-webkit-scrollbar-thumb,
+.tree-container:active::-webkit-scrollbar-thumb,
+.tree-container:focus::-webkit-scrollbar-thumb {
+  background: #39fff6;
+  opacity: 0.7;
+}
+.tree-container::-webkit-scrollbar-thumb {
+  background: rgba(57,255,246,0.15);
+  border-radius: 4px;
+  transition: background 0.3s, opacity 0.3s;
+}
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.scroll-button:hover {
-  background: rgba(57, 255, 246, 0.3);
-  transform: scale(1.1);
+/* For Firefox */
+.tree-container {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
-
-.scroll-left {
-  left: 20px;
-}
-
-.scroll-right {
-  right: 20px;
-}
-
-.scroll-button svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+.tree-container:hover,
+.tree-container:active,
+.tree-container:focus {
+  scrollbar-color: rgba(57,255,246,0.08) transparent;
 } 
