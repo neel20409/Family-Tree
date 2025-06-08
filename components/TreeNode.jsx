@@ -6,9 +6,8 @@ import './TreeNode.css';
 // Helper to get the correct optimized image path
 const getOptimizedPhotoPath = (photo) => {
   if (!photo) return '';
-  // Remove any existing prefixes and convert .png/.jpeg/.jpg to .jpg
-  const normalized = photo.replace(/^(photos\/|optimized\/)/, '').replace(/\.(png|jpeg|jpg)$/i, '.jpg');
-  return `https://neel20409.github.io/photos/${normalized.toLowerCase()}`;
+  // Fast path resolution - directly convert photos/ to optimized/
+  return photo.replace('/photos/', '/optimized/');
 };
 
 // Helper to find path to a name in the tree

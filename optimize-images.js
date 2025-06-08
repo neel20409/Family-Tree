@@ -16,7 +16,11 @@ if (!fs.existsSync(optimizedDir)) {
 
 // Helper to normalize filename
 const normalizeFilename = (filename) => {
-    return filename.toLowerCase().replace(/\.(jpg|jpeg|png)$/i, '.jpg');
+    // Remove any 'copy' or 'copy X' from filename
+    const cleanName = filename.replace(/\s+copy(?:\s+\d+)?/i, '');
+    // Keep original case but ensure extension is lowercase
+    const nameWithoutExt = cleanName.replace(/\.(jpg|jpeg|png)$/i, '');
+    return `${nameWithoutExt}.jpg`;
 };
 
 // Helper to find case-insensitive file
@@ -26,86 +30,67 @@ const findCaseInsensitiveFile = (dir, filename) => {
     return files.find(file => file.toLowerCase() === lowerFilename);
 };
 
-// Image optimization settings
+// Clean up duplicate files
+const cleanupDuplicates = () => {
+    const files = fs.readdirSync(optimizedDir);
+    const seen = new Set();
+    let removedCount = 0;
+
+    files.forEach(file => {
+        const normalized = normalizeFilename(file);
+        if (seen.has(normalized.toLowerCase())) {
+            fs.unlinkSync(path.join(optimizedDir, file));
+            console.log(`Removed duplicate: ${file}`);
+            removedCount++;
+        } else {
+            seen.add(normalized.toLowerCase());
+        }
+    });
+
+    console.log(`Cleaned up ${removedCount} duplicate files`);
+};
+
+// Fast image optimization settings
 const optimizeImage = async (inputPath, outputPath) => {
     try {
-        console.log(`Processing: ${path.basename(inputPath)}`);
-        
-        // Ensure output directory exists
-        const outputDir = path.dirname(outputPath);
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-
         await sharp(inputPath)
-            .resize(800, 800, { // Max dimensions
+            .resize(400, 400, { // Reduced size for faster loading
                 fit: 'inside',
                 withoutEnlargement: true
             })
-            .jpeg({ // Convert to JPEG with quality settings
-                quality: 80,
-                progressive: true
+            .jpeg({ 
+                quality: 70, // Slightly reduced quality for faster loading
+                progressive: true,
+                optimizeScans: true
             })
             .toFile(outputPath);
-        
-        console.log(`✓ Optimized: ${path.basename(outputPath)}`);
         return true;
     } catch (error) {
-        console.error(`✗ Error optimizing ${inputPath}:`, error);
+        console.error(`Error optimizing ${inputPath}:`, error);
         return false;
     }
 };
 
-// Process all images in photosDir
+// Process all images in parallel
 const processImages = async () => {
     const files = fs.readdirSync(photosDir);
-    let processedCount = 0;
-    let errorCount = 0;
-    let skippedCount = 0;
-    
-    // Get list of all image files
     const imageFiles = files.filter(file => file.match(/\.(jpg|jpeg|png)$/i));
     
-    console.log('\nFound images:', imageFiles.length);
+    console.log(`Processing ${imageFiles.length} images...`);
     
-    for (const file of imageFiles) {
-        const inputPath = path.join(photosDir, file);
-        const normalizedName = normalizeFilename(file);
-        const outputPath = path.join(optimizedDir, normalizedName);
-        
-        // Check if file already exists in optimized directory
-        const existingFile = findCaseInsensitiveFile(optimizedDir, normalizedName);
-        if (existingFile) {
-            console.log(`- Skipping ${file} (already optimized as ${existingFile})`);
-            skippedCount++;
-            continue;
-        }
-        
-        try {
-            const success = await optimizeImage(inputPath, outputPath);
-            if (success) {
-                processedCount++;
-            } else {
-                errorCount++;
-            }
-        } catch (error) {
-            console.error(`Failed to process ${file}:`, error);
-            errorCount++;
-        }
+    // Process images in parallel batches
+    const batchSize = 5;
+    for (let i = 0; i < imageFiles.length; i += batchSize) {
+        const batch = imageFiles.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (file) => {
+            const inputPath = path.join(photosDir, file);
+            const outputPath = path.join(optimizedDir, file.replace(/\.(png|jpeg)$/i, '.jpg'));
+            await optimizeImage(inputPath, outputPath);
+        }));
     }
-
-    console.log('\nOptimization Summary:');
-    console.log(`Total images found: ${imageFiles.length}`);
-    console.log(`Files processed: ${processedCount}`);
-    console.log(`Files skipped: ${skippedCount}`);
-    console.log(`Errors encountered: ${errorCount}`);
+    
+    console.log('Image optimization complete!');
 };
 
 // Run the optimization
-console.log('Starting image optimization...\n');
-processImages().then(() => {
-    console.log('\nImage optimization complete!');
-}).catch(error => {
-    console.error('Fatal error during optimization:', error);
-    process.exit(1);
-}); 
+processImages().catch(console.error); 
