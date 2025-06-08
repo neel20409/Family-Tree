@@ -6,8 +6,8 @@ import './TreeNode.css';
 // Helper to get the correct optimized image path
 const getOptimizedPhotoPath = (photo) => {
   if (!photo) return '';
-  // Fast path resolution - directly convert photos/ to optimized/
-  return photo.replace('/photos/', '/optimized/');
+  // Include repository name in the path
+  return photo.replace('/photos/', '/Family-Tree/optimized/');
 };
 
 // Helper to find path to a name in the tree
