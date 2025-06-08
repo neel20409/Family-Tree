@@ -8,7 +8,8 @@ const getOptimizedPhotoPath = (photo) => {
   if (!photo) return '';
   // Remove 'photos/' prefix and convert .png/.jpeg/.jpg to .jpg
   const normalized = photo.replace(/^photos\//, '').replace(/\.(png|jpeg|jpg)$/i, '.jpg');
-  return `/Family-Tree/assets/photos/${normalized.toLowerCase()}`;
+  return `
+  optimized/${normalized.toLowerCase()}`;
 };
 
 // Helper to find path to a name in the tree
