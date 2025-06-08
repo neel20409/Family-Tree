@@ -6,10 +6,9 @@ import './TreeNode.css';
 // Helper to get the correct optimized image path
 const getOptimizedPhotoPath = (photo) => {
   if (!photo) return '';
-  // Remove 'photos/' prefix and convert .png/.jpeg/.jpg to .jpg
-  const normalized = photo.replace(/^photos\//, '').replace(/\.(png|jpeg|jpg)$/i, '.jpg');
-  return `
-  optimized/${normalized.toLowerCase()}`;
+  // Remove any existing prefixes and convert .png/.jpeg/.jpg to .jpg
+  const normalized = photo.replace(/^(photos\/|optimized\/)/, '').replace(/\.(png|jpeg|jpg)$/i, '.jpg');
+  return `/photos/${normalized.toLowerCase()}`;
 };
 
 // Helper to find path to a name in the tree
@@ -252,35 +251,35 @@ const FamilyTreeApp = () => {
     {
       title: "Source 1",
       description: "Original family tree documentation",
-      image: "photos/source1.jpg",
+      image: "/photos/source1.jpg",
       type: "document",
       date: "2024-03-15"
     },
     {
       title: "Source 2",
       description: "Historical records and archives",
-      image: "photos/source2.jpg",
+      image: "/photos/source2.jpg",
       type: "archive",
       date: "2024-03-14"
     },
     {
       title: "Source 3",
       description: "Family photographs collection",
-      image: "photos/source3.jpg",
+      image: "/photos/source3.jpg",
       type: "photo",
       date: "2024-03-13"
     },
     {
       title: "Source 4",
       description: "Ancestral documents and certificates",
-      image: "photos/source4.jpg",
+      image: "/photos/source4.jpg",
       type: "certificate",
       date: "2024-03-12"
     },
     {
       title: "Source 5",
       description: "Family heritage artifacts",
-      image: "photos/source5.jpg",
+      image: "/photos/source5.jpg",
       type: "artifact",
       date: "2024-03-11"
     }
