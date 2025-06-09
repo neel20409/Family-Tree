@@ -5,7 +5,7 @@ html, body, #root {
   min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
-  background-image: url('/optimized/castle.jpg');
+  background-image: url('/optimized/castle.jpeg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;

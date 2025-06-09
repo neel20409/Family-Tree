@@ -250,35 +250,35 @@ const FamilyTreeApp = () => {
     {
       title: "Source 1",
       description: "Original family tree documentation",
-      image: "/photos/source1.jpg",
+      image: "/photos/source1.jpeg",
       type: "document",
       date: "2024-03-15"
     },
     {
       title: "Source 2",
       description: "Historical records and archives",
-      image: "/photos/source2.jpg",
+      image: "/photos/source2.jpeg",
       type: "archive",
       date: "2024-03-14"
     },
     {
       title: "Source 3",
       description: "Family photographs collection",
-      image: "/photos/source3.jpg",
+      image: "/photos/source3.jpeg",
       type: "photo",
       date: "2024-03-13"
     },
     {
       title: "Source 4",
       description: "Ancestral documents and certificates",
-      image: "/photos/source4.jpg",
+      image: "/photos/source4.jpeg",
       type: "certificate",
       date: "2024-03-12"
     },
     {
       title: "Source 5",
       description: "Family heritage artifacts",
-      image: "/photos/source5.jpg",
+      image: "/photos/source5.jpeg",
       type: "artifact",
       date: "2024-03-11"
     }
