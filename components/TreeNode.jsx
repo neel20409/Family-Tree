@@ -243,16 +243,14 @@ const FamilyTreeApp = () => {
   const [sourceImageModalOpen, setSourceImageModalOpen] = useState(false);
   const [selectedSourceImage, setSelectedSourceImage] = useState(null);
   const confettiFired = useRef(false);
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [expandPath, setExpandPath] = useState([]);
   const [highlightName, setHighlightName] = useState('');
   const [activePath, setActivePath] = useState([]);
   const [maxExpandedDepth, setMaxExpandedDepth] = useState(0);
   const treeContainerRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [foundNode, setFoundNode] = useState(null);
 
   const sources = [
     {
@@ -328,20 +326,33 @@ const FamilyTreeApp = () => {
 
   useEffect(() => {
     setMaxExpandedDepth(0);
-  }, [search]);
+  }, [searchTerm]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!search.trim()) return;
-    const path = findPathByName(familyTree, search.trim());
+    if (!searchTerm.trim()) {
+      setZoomLevel(1); // Reset zoom when search is cleared
+      return;
+    }
+    const path = findPathByName(familyTree, searchTerm.trim());
     if (path) {
       setExpandPath(path);
       setHighlightName(path[path.length - 1]);
       setActivePath(path);
+      setZoomLevel(0.25); // Automatically zoom out to 25%
+      setTimeout(() => {
+        if (treeContainerRef.current) {
+          const nodeElement = document.querySelector('.node-box.highlighted');
+          if (nodeElement) {
+            nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 100);
     } else {
       setExpandPath([]);
       setHighlightName('');
       setActivePath([]);
+      setZoomLevel(1); // Reset zoom if name not found
       alert('Name not found in the family tree.');
     }
   };
@@ -353,33 +364,6 @@ const FamilyTreeApp = () => {
 
   const closeSourceModal = () => {
     setSourceModalOpen(false);
-  };
-
-  // Handle zoom controls
-  const handleZoom = (direction) => {
-    setZoomLevel(prev => {
-      const newZoom = direction === 'in' ? prev + 0.1 : prev - 0.1;
-      return Math.min(Math.max(0.5, newZoom), 2); // Limit zoom between 0.5x and 2x
-    });
-  };
-
-  // Handle touch events for mobile scrolling
-  const handleTouchStart = (e) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - treeContainerRef.current.offsetLeft);
-    setScrollLeft(treeContainerRef.current.scrollLeft);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.touches[0].pageX - treeContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    treeContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
   };
 
   return (
@@ -395,30 +379,25 @@ const FamilyTreeApp = () => {
             type="text"
             className="search-bar"
             placeholder="Search name..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </form>
       </div>
       <div className="heading-center">
         <h1 className="neon-heading">Roots of the Bhatt Family</h1>
       </div>
-      <div className="zoom-controls">
-        <button onClick={() => handleZoom('out')} className="zoom-btn">-</button>
-        <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-        <button onClick={() => handleZoom('in')} className="zoom-btn">+</button>
-      </div>
       <div 
         className="tree-container" 
         ref={treeContainerRef}
-        style={{ 
+        style={{
           transform: `scale(${zoomLevel})`,
-          transformOrigin: 'center top',
-          transition: 'transform 0.2s ease-out'
+          transformOrigin: 'center center',
+          transition: 'transform 0.3s ease-out',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollBehavior: 'smooth'
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         <TreeNode 
           onPhotoClick={handlePhotoClick} 
