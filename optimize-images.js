@@ -55,24 +55,31 @@ const cleanupDuplicates = () => {
 const optimizeImage = async (inputPath, outputPath) => {
     try {
         const baseOutputPath = outputPath.replace(/\.(jpg|jpeg|png)$/i, '');
+        
+        // Generate JPEG version with better quality
         await sharp(inputPath)
             .jpeg({ 
-                quality: 60, // Slightly reduced quality for faster loading
+                quality: 85, // Increased quality for better visual fidelity
                 progressive: true,
-                optimizeScans: true
+                optimizeScans: true,
+                chromaSubsampling: '4:4:4' // Better color quality
             })
             .toFile(outputPath);
         
-        // Generate WebP version
+        // Generate WebP version with better quality
         await sharp(inputPath)
-            .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 60 })
+            .webp({ 
+                quality: 85,
+                effort: 6 // Higher effort for better compression
+            })
             .toFile(baseOutputPath + '.webp');
         
-        // Generate AVIF version
+        // Generate AVIF version with better quality
         await sharp(inputPath)
-            .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-            .avif({ quality: 60 })
+            .avif({ 
+                quality: 85,
+                effort: 6 // Higher effort for better compression
+            })
             .toFile(baseOutputPath + '.avif');
         
         return true;

@@ -393,14 +393,45 @@ const FamilyTreeApp = () => {
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
-              <picture>
-                <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.avif')} type="image/avif" />
-                <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.webp')} type="image/webp" />
-                <img src={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.jpeg')} alt="Enlarged" className="modal-img" style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} />
-              </picture>
-            </div>
-            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <picture>
+              <source srcSet={modalImg + '.avif'} type="image/avif" />
+              <source srcSet={modalImg + '.webp'} type="image/webp" />
+              <img 
+                src={modalImg + '.jpeg'} 
+                alt="Enlarged" 
+                className="modal-img" 
+                style={{ 
+                  maxWidth: '90vw', 
+                  maxHeight: '90vh', 
+                  objectFit: 'contain',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
+                }} 
+              />
+            </picture>
+            <button 
+              className="modal-close" 
+              onClick={closeModal}
+              style={{
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                fontSize: '24px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              &times;
+            </button>
           </div>
         </div>
       )}
