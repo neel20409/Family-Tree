@@ -328,10 +328,26 @@ const FamilyTreeApp = () => {
     setMaxExpandedDepth(0);
   }, [searchTerm]);
 
+  // Function to center the tree
+  const centerTree = () => {
+    if (treeContainerRef.current) {
+      const container = treeContainerRef.current;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+      const centerScroll = maxScroll / 2;
+      
+      container.scrollTo({
+        left: centerScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) {
-      setZoomLevel(1); // Reset zoom when search is cleared
+      setZoomLevel(1);
       return;
     }
     const path = findPathByName(familyTree, searchTerm.trim());
@@ -339,20 +355,22 @@ const FamilyTreeApp = () => {
       setExpandPath(path);
       setHighlightName(path[path.length - 1]);
       setActivePath(path);
-      setZoomLevel(0.25); // Automatically zoom out to 25%
+      setZoomLevel(0.25);
+      // Center the tree after zooming
       setTimeout(() => {
+        centerTree();
         if (treeContainerRef.current) {
           const nodeElement = document.querySelector('.node-box.highlighted');
           if (nodeElement) {
             nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }
-      }, 100);
+      }, 300);
     } else {
       setExpandPath([]);
       setHighlightName('');
       setActivePath([]);
-      setZoomLevel(1); // Reset zoom if name not found
+      setZoomLevel(1);
       alert('Name not found in the family tree.');
     }
   };
