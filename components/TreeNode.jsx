@@ -413,21 +413,22 @@ const FamilyTreeApp = () => {
               className="modal-close" 
               onClick={closeModal}
               style={{
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
                 background: 'rgba(0,0,0,0.5)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '50%',
-                width: '40px',
-                height: '40px',
-                fontSize: '24px',
+                width: '32px',
+                height: '32px',
+                fontSize: '20px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                zIndex: 2
               }}
             >
               &times;
