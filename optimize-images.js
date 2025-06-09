@@ -53,6 +53,7 @@ const cleanupDuplicates = () => {
 // Fast image optimization settings
 const optimizeImage = async (inputPath, outputPath) => {
     try {
+        const baseOutputPath = outputPath.replace(/\.(jpg|jpeg|png)$/i, '');
         await sharp(inputPath)
             .resize(300, 300, { // Reduced size for faster loading
                 fit: 'inside',
@@ -64,6 +65,19 @@ const optimizeImage = async (inputPath, outputPath) => {
                 optimizeScans: true
             })
             .toFile(outputPath);
+        
+        // Generate WebP version
+        await sharp(inputPath)
+            .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 60 })
+            .toFile(baseOutputPath + '.webp');
+        
+        // Generate AVIF version
+        await sharp(inputPath)
+            .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+            .avif({ quality: 60 })
+            .toFile(baseOutputPath + '.avif');
+        
         return true;
     } catch (error) {
         console.error(`Error optimizing ${inputPath}:`, error);

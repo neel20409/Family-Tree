@@ -11,7 +11,7 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[hash][extname]'
+        manualChunks: undefined
       }
     },
     copyPublicDir: true,
@@ -32,6 +32,9 @@ export default defineConfig({
     },
     port: 3000,
     strictPort: true,
-    host: true
+    host: true,
+    headers: {
+      'Cache-Control': 'public, max-age=31536000'
+    }
   }
 })
