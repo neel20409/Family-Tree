@@ -249,6 +249,10 @@ const FamilyTreeApp = () => {
   const [activePath, setActivePath] = useState([]);
   const [maxExpandedDepth, setMaxExpandedDepth] = useState(0);
   const treeContainerRef = useRef(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   const sources = [
     {
@@ -351,19 +355,31 @@ const FamilyTreeApp = () => {
     setSourceModalOpen(false);
   };
 
-  const handleScroll = (direction) => {
-    if (treeContainerRef.current) {
-      const scrollAmount = 300; // Adjust this value to control scroll distance
-      const currentScroll = treeContainerRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      
-      treeContainerRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-    }
+  // Handle zoom controls
+  const handleZoom = (direction) => {
+    setZoomLevel(prev => {
+      const newZoom = direction === 'in' ? prev + 0.1 : prev - 0.1;
+      return Math.min(Math.max(0.5, newZoom), 2); // Limit zoom between 0.5x and 2x
+    });
+  };
+
+  // Handle touch events for mobile scrolling
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - treeContainerRef.current.offsetLeft);
+    setScrollLeft(treeContainerRef.current.scrollLeft);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.touches[0].pageX - treeContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    treeContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
   };
 
   return (
@@ -387,8 +403,30 @@ const FamilyTreeApp = () => {
       <div className="heading-center">
         <h1 className="neon-heading">Roots of the Bhatt Family</h1>
       </div>
-      <div className="tree-container" ref={treeContainerRef}>
-        <TreeNode onPhotoClick={handlePhotoClick} expandPath={expandPath} highlightName={highlightName} activePath={activePath} onMaxDepth={handleMaxDepth} />
+      <div className="zoom-controls">
+        <button onClick={() => handleZoom('out')} className="zoom-btn">-</button>
+        <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+        <button onClick={() => handleZoom('in')} className="zoom-btn">+</button>
+      </div>
+      <div 
+        className="tree-container" 
+        ref={treeContainerRef}
+        style={{ 
+          transform: `scale(${zoomLevel})`,
+          transformOrigin: 'center top',
+          transition: 'transform 0.2s ease-out'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <TreeNode 
+          onPhotoClick={handlePhotoClick} 
+          expandPath={expandPath} 
+          highlightName={highlightName} 
+          activePath={activePath} 
+          onMaxDepth={handleMaxDepth} 
+        />
       </div>
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
