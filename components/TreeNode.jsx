@@ -486,12 +486,46 @@ const FamilyTreeApp = () => {
       {sourceImageModalOpen && selectedSourceImage && (
         <div className="source-image-modal-overlay" onClick={closeSourceImageModal}>
           <div className="source-image-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="source-image-modal-close" onClick={closeSourceImageModal}>&times;</button>
-            <img 
-              src={selectedSourceImage} 
-              alt="Source Document" 
-              className="source-image-full"
-            />
+            <picture>
+              <source srcSet={selectedSourceImage + '.avif'} type="image/avif" />
+              <source srcSet={selectedSourceImage + '.webp'} type="image/webp" />
+              <img 
+                src={selectedSourceImage + '.jpeg'} 
+                alt="Source Document" 
+                className="source-image-full"
+                style={{ 
+                  maxWidth: '90vw', 
+                  maxHeight: '90vh', 
+                  objectFit: 'contain',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
+                }}
+              />
+            </picture>
+            <button 
+              className="source-image-modal-close" 
+              onClick={closeSourceImageModal}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                zIndex: 2
+              }}
+            >
+              &times;
+            </button>
           </div>
         </div>
       )}
