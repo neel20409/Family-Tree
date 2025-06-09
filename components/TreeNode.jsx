@@ -393,11 +393,13 @@ const FamilyTreeApp = () => {
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <picture>
-              <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.avif')} type="image/avif" />
-              <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.webp')} type="image/webp" />
-              <img src={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.jpeg')} alt="Enlarged" className="modal-img" style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} />
-            </picture>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
+              <picture>
+                <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.avif')} type="image/avif" />
+                <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.webp')} type="image/webp" />
+                <img src={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.jpeg')} alt="Enlarged" className="modal-img" style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} />
+              </picture>
+            </div>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
         </div>
