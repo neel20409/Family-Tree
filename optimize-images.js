@@ -54,12 +54,12 @@ const cleanupDuplicates = () => {
 const optimizeImage = async (inputPath, outputPath) => {
     try {
         await sharp(inputPath)
-            .resize(400, 400, { // Reduced size for faster loading
+            .resize(300, 300, { // Reduced size for faster loading
                 fit: 'inside',
                 withoutEnlargement: true
             })
             .jpeg({ 
-                quality: 70, // Slightly reduced quality for faster loading
+                quality: 60, // Slightly reduced quality for faster loading
                 progressive: true,
                 optimizeScans: true
             })
