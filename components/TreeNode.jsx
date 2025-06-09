@@ -3,11 +3,11 @@ import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import './TreeNode.css';
 
-// Helper to get the correct optimized image path
-const getOptimizedPhotoPath = (photo) => {
+// Helper to get the correct optimized image path (returns base path without extension)
+const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
-  // Include repository name in the path
-  return photo.replace('/photos/', '/Family-Tree/optimized/');
+  // Remove extension and replace /photos/ with /Family-Tree/optimized/
+  return photo.replace(/\.(jpg|jpeg|png)$/i, '').replace('/photos/', '/Family-Tree/optimized/');
 };
 
 // Helper to find path to a name in the tree
@@ -121,24 +121,28 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
               popAudioRef.current.currentTime = 0;
               popAudioRef.current.play();
             }
-            if (node.photo && onPhotoClick) onPhotoClick(getOptimizedPhotoPath(node.photo));
+            if (node.photo && onPhotoClick) onPhotoClick(getOptimizedPhotoBase(node.photo));
           }} 
           style={{ cursor: node.photo ? 'zoom-in' : 'default' }}
         >
           {node.photo ? (
-            <img 
-              src={getOptimizedPhotoPath(node.photo)} 
-              alt={node.name} 
-              style={{ 
-                width: '85px', 
-                height: '85px', 
-                objectFit: 'cover', 
-                borderRadius: '50%',
-                display: imageLoadError ? 'none' : 'block'
-              }}
-              onError={() => setImageLoadError(true)}
-              onLoad={() => setImageLoadError(false)}
-            />
+            <picture>
+              <source srcSet={getOptimizedPhotoBase(node.photo) + '.avif'} type="image/avif" />
+              <source srcSet={getOptimizedPhotoBase(node.photo) + '.webp'} type="image/webp" />
+              <img 
+                src={getOptimizedPhotoBase(node.photo) + '.jpeg'} 
+                alt={node.name} 
+                style={{ 
+                  width: '85px', 
+                  height: '85px', 
+                  objectFit: 'cover', 
+                  borderRadius: '50%',
+                  display: imageLoadError ? 'none' : 'block'
+                }}
+                onError={() => setImageLoadError(true)}
+                onLoad={() => setImageLoadError(false)}
+              />
+            </picture>
           ) : (
             <div className="node-photo-placeholder">
               {node.name.substring(0, 2)}
@@ -389,7 +393,11 @@ const FamilyTreeApp = () => {
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-img-container" onClick={e => e.stopPropagation()}>
-            <img src={modalImg} alt="Enlarged" className="modal-img" style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} />
+            <picture>
+              <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.avif')} type="image/avif" />
+              <source srcSet={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.webp')} type="image/webp" />
+              <img src={modalImg.replace(/\.(jpg|jpeg|png)$/i, '.jpeg')} alt="Enlarged" className="modal-img" style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} />
+            </picture>
             <button className="modal-close" onClick={closeModal}>&times;</button>
           </div>
         </div>
@@ -420,13 +428,17 @@ const FamilyTreeApp = () => {
                   <div className="source-item-date">{source.date}</div>
                   <div 
                     className="source-item-preview"
-                    onClick={() => handleSourceImageClick(getOptimizedPhotoPath(source.image))}
+                    onClick={() => handleSourceImageClick(getOptimizedPhotoBase(source.image))}
                   >
-                    <img 
-                      src={getOptimizedPhotoPath(source.image)} 
-                      alt={source.title}
-                      className="source-thumbnail"
-                    />
+                    <picture>
+                      <source srcSet={getOptimizedPhotoBase(source.image) + '.avif'} type="image/avif" />
+                      <source srcSet={getOptimizedPhotoBase(source.image) + '.webp'} type="image/webp" />
+                      <img 
+                        src={getOptimizedPhotoBase(source.image) + '.jpeg'} 
+                        alt={source.title}
+                        className="source-thumbnail"
+                      />
+                    </picture>
                     <div className="source-preview-overlay">
                       <span>View</span>
                     </div>

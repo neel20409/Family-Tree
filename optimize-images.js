@@ -20,7 +20,8 @@ const normalizeFilename = (filename) => {
     const cleanName = filename.replace(/\s+copy(?:\s+\d+)?/i, '');
     // Keep original case but ensure extension is lowercase
     const nameWithoutExt = cleanName.replace(/\.(jpg|jpeg|png)$/i, '');
-    return `${nameWithoutExt}.jpg`;
+    const ext = filename.match(/\.(jpg|jpeg|png)$/i)[1].toLowerCase();
+    return `${nameWithoutExt}.${ext}`;
 };
 
 // Helper to find case-insensitive file

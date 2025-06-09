@@ -5,7 +5,11 @@ html, body, #root {
   min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
-  background-image: url('/optimized/castle.jpeg');
+  background-image: image-set(
+    url('/optimized/castle.avif') type('image/avif'),
+    url('/optimized/castle.webp') type('image/webp'),
+    url('/optimized/castle.jpeg') type('image/jpeg')
+  );
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
