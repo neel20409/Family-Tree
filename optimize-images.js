@@ -56,10 +56,6 @@ const optimizeImage = async (inputPath, outputPath) => {
     try {
         const baseOutputPath = outputPath.replace(/\.(jpg|jpeg|png)$/i, '');
         await sharp(inputPath)
-            .resize(300, 300, { // Reduced size for faster loading
-                fit: 'inside',
-                withoutEnlargement: true
-            })
             .jpeg({ 
                 quality: 60, // Slightly reduced quality for faster loading
                 progressive: true,
