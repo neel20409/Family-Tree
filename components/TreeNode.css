@@ -813,4 +813,150 @@ body {
   font-size: 14px;
   min-width: 48px;
   text-align: center;
+}
+
+/* Remove language toggle styles */
+.language-toggle-container,
+.language-toggle-btn,
+.language-icon,
+.language-text {
+  display: none;
+}
+
+/* Add scroll buttons */
+/* .scroll-button, .scroll-left, .scroll-right { ... } */
+
+/* Remove scroll button styles */
+/* .scroll-button, .scroll-left, .scroll-right { ... } */
+
+.tree-container::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background: transparent;
+  transition: background 0.3s;
+}
+.tree-container:hover::-webkit-scrollbar-thumb,
+.tree-container:active::-webkit-scrollbar-thumb,
+.tree-container:focus::-webkit-scrollbar-thumb {
+  background: #39fff6;
+  opacity: 0.7;
+}
+.tree-container::-webkit-scrollbar-thumb {
+  background: rgba(57,255,246,0.15);
+  border-radius: 4px;
+  transition: background 0.3s, opacity 0.3s;
+}
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* For Firefox */
+.tree-container {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.tree-container:hover,
+.tree-container:active,
+.tree-container:focus {
+  scrollbar-color: rgba(57,255,246,0.08) transparent;
+}
+
+.zoom-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.zoom-level {
+  color: white;
+  font-size: 14px;
+  min-width: 48px;
+  text-align: center;
+}
+
+/* Language Toggle Switch */
+.lang-toggle-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  justify-content: center;
+}
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  width: 120px;
+  height: 54px;
+  border-radius: 32px;
+  background: linear-gradient(90deg, #7f7fd5 0%, #86a8e7 50%, #91eac9 100%);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  position: relative;
+  cursor: pointer;
+  padding: 0 0;
+  transition: background 0.3s;
+  user-select: none;
+}
+.lang-toggle.gujarati {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+}
+.lang-label {
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: #bdbdbd;
+  transition: color 0.3s, font-weight 0.3s;
+  z-index: 1;
+  min-width: 70px;
+  text-align: center;
+}
+.lang-label.selected {
+  color: #222;
+  font-weight: 800;
+}
+.lang-thumb {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  width: 42px;
+  height: 42px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  transition: left 0.35s cubic-bezier(.4,2,.6,1);
+  z-index: 2;
+}
+.lang-toggle.gujarati .lang-thumb {
+  left: 71px;
 } 

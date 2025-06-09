@@ -3,6 +3,46 @@ import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import './TreeNode.css';
 
+// Translations object
+const translations = {
+  en: {
+    searchPlaceholder: "Search name...",
+    source: "Source",
+    rootsOfFamily: "Roots of the Bhatt Family",
+    born: "Born",
+    passed: "Passed",
+    sourceDocumentation: "Source Documentation",
+    name: "Name",
+    type: "Type",
+    date: "Date",
+    preview: "Preview",
+    view: "View",
+    nameNotFound: "Name not found in the family tree."
+  },
+  gu: {
+    searchPlaceholder: "નામ શોધો...",
+    source: "સ્રોત",
+    rootsOfFamily: "ભટ્ટ પરિવાર",
+    born: "જન્મ",
+    passed: "અવસાન",
+    sourceDocumentation: "સ્રોત દસ્તાવેજીકરણ",
+    name: "નામ",
+    type: "પ્રકાર",
+    date: "તારીખ",
+    preview: "પૂર્વાવલોકન",
+    view: "જુઓ",
+    nameNotFound: "પરિવાર વૃક્ષમાં નામ મળ્યું નથી."
+  }
+};
+
+// Translation hook
+const useTranslation = (isGujarati) => {
+  const t = (key) => {
+    return translations[isGujarati ? 'gu' : 'en'][key] || key;
+  };
+  return t;
+};
+
 // Helper to get the correct optimized image path (returns base path without extension)
 const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
@@ -44,7 +84,29 @@ const getNodeColors = (level) => {
   return colors[Math.min(level, colors.length - 1)];
 };
 
-const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [], highlightName, activePath = [], onMaxDepth }) => {
+// Gujarati months
+const guMonths = [
+  'જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન',
+  'જુલાઈ', 'ઑગસ્ટ', 'સપ્ટેમ્બર', 'ઑક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર'
+];
+
+function formatDate(dateStr, isGujarati) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date)) return dateStr; // fallback if invalid
+  const day = date.getDate();
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  if (isGujarati) {
+    return `${day} ${guMonths[month]} ${year}`;
+  } else {
+    // Default: e.g. 12 Mar 1845
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+}
+
+const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [], highlightName, activePath = [], onMaxDepth, isGujarati }) => {
+  const t = useTranslation(isGujarati);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [glow, setGlow] = useState(false);
@@ -149,15 +211,15 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
             </div>
           )}
         </div>
-        <span className="node-name">{node.name}</span>
+        <span className="node-name">{isGujarati && node.gujaratiName ? node.gujaratiName : node.name}</span>
         <div className="dates-container">
           <div className="date-box">
-            <span className="date-label">Born</span>
-            <span className="date-value">{node.birthDate || '??/??/????'}</span>
+            <span className="date-label">{t('born')}</span>
+            <span className="date-value">{formatDate(node.birthDate, isGujarati) || '??/??/????'}</span>
           </div>
           <div className="date-box">
-            <span className="date-label">Passed</span>
-            <span className="date-value">{node.deathDate || '----'}</span>
+            <span className="date-label">{t('passed')}</span>
+            <span className="date-value">{formatDate(node.deathDate, isGujarati) || '----'}</span>
           </div>
         </div>
       </div>
@@ -226,6 +288,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
                   highlightName={highlightName}
                   activePath={activePath}
                   onMaxDepth={onMaxDepth}
+                  isGujarati={isGujarati}
                 />
               </div>
             ))}
@@ -242,6 +305,7 @@ const FamilyTreeApp = () => {
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [sourceImageModalOpen, setSourceImageModalOpen] = useState(false);
   const [selectedSourceImage, setSelectedSourceImage] = useState(null);
+  const [isGujarati, setIsGujarati] = useState(false);
   const confettiFired = useRef(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandPath, setExpandPath] = useState([]);
@@ -251,6 +315,7 @@ const FamilyTreeApp = () => {
   const treeContainerRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [foundNode, setFoundNode] = useState(null);
+  const t = useTranslation(isGujarati);
 
   const sources = [
     {
@@ -356,7 +421,6 @@ const FamilyTreeApp = () => {
       setHighlightName(path[path.length - 1]);
       setActivePath(path);
       setZoomLevel(0.25);
-      // Center the tree after zooming
       setTimeout(() => {
         centerTree();
         if (treeContainerRef.current) {
@@ -371,7 +435,7 @@ const FamilyTreeApp = () => {
       setHighlightName('');
       setActivePath([]);
       setZoomLevel(1);
-      alert('Name not found in the family tree.');
+      alert(t('nameNotFound'));
     }
   };
 
@@ -386,25 +450,42 @@ const FamilyTreeApp = () => {
 
   return (
     <div className="app-container">
-      <div className="source-btn-container">
-        <button className="source-btn" onClick={() => setSourceModalOpen(true)}>
-          Source
-        </button>
-      </div>
       <div className="search-bar-topright">
-        <form onSubmit={handleSearch}>
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </form>
+        <input
+          type="text"
+          className="search-bar"
+          placeholder={t('searchPlaceholder')}
+          value={searchTerm}
+          onChange={handleSearch}
+        />
       </div>
+
+      <div className="source-btn-container" style={{flexDirection: 'column', alignItems: 'center', width: 'auto'}}>
+        <button className="source-btn" onClick={() => setSourceModalOpen(true)}>
+          {t('source')}
+        </button>
+        <div className="lang-toggle-row">
+          <span className={`lang-label${!isGujarati ? ' selected' : ''}`}>English</span>
+          <div
+            className={`lang-toggle${isGujarati ? ' gujarati' : ' english'}`}
+            onClick={() => setIsGujarati(v => !v)}
+          >
+            <span className="lang-thumb">
+              {!isGujarati ? (
+                <span role="img" aria-label="English">🇬🇧</span>
+              ) : (
+                <span role="img" aria-label="Gujarati">🇮🇳</span>
+              )}
+            </span>
+          </div>
+          <span className={`lang-label${isGujarati ? ' selected' : ''}`}>Gujarati</span>
+        </div>
+      </div>
+
       <div className="heading-center">
-        <h1 className="neon-heading">Roots of the Bhatt Family</h1>
+        <h1 className="neon-heading">{t('rootsOfFamily')}</h1>
       </div>
+
       <div 
         className="tree-container" 
         ref={treeContainerRef}
@@ -422,7 +503,8 @@ const FamilyTreeApp = () => {
           expandPath={expandPath} 
           highlightName={highlightName} 
           activePath={activePath} 
-          onMaxDepth={handleMaxDepth} 
+          onMaxDepth={handleMaxDepth}
+          isGujarati={isGujarati}
         />
       </div>
       {modalOpen && modalImg && (
@@ -475,17 +557,15 @@ const FamilyTreeApp = () => {
         <div className="source-modal-overlay" onClick={closeSourceModal}>
           <div className="source-modal-content" onClick={e => e.stopPropagation()}>
             <button className="source-modal-close" onClick={closeSourceModal}>&times;</button>
-            <h2 className="source-modal-title">Source Documentation</h2>
+            <h2 className="source-modal-title">{t('sourceDocumentation')}</h2>
             
-            {/* Drive-like header */}
             <div className="source-header">
-              <div className="source-header-item">Name</div>
-              <div className="source-header-item">Type</div>
-              <div className="source-header-item">Date</div>
-              <div className="source-header-item">Preview</div>
+              <div className="source-header-item">{t('name')}</div>
+              <div className="source-header-item">{t('type')}</div>
+              <div className="source-header-item">{t('date')}</div>
+              <div className="source-header-item">{t('preview')}</div>
             </div>
 
-            {/* Source items list */}
             <div className="source-list">
               {sources.map((source, index) => (
                 <div key={index} className="source-item">
@@ -509,7 +589,7 @@ const FamilyTreeApp = () => {
                       />
                     </picture>
                     <div className="source-preview-overlay">
-                      <span>View</span>
+                      <span>{t('view')}</span>
                     </div>
                   </div>
                 </div>
@@ -568,5 +648,4 @@ const FamilyTreeApp = () => {
   );
 };
 
-export { TreeNode };
 export default FamilyTreeApp;
