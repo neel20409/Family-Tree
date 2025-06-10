@@ -540,11 +540,14 @@ const FamilyTreeApp = () => {
             transform: `scale(${zoomLevel})`,
             transformOrigin: 'center center',
             transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
-            overflowX: 'auto',
+            overflow: 'auto',                // <-- Enable both scrollbars
             WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
             touchAction: 'none',
-            minWidth: '100%',
+            minWidth: '100vw',               // <-- Ensure full viewport width
+            minHeight: '100vh',              // <-- Ensure full viewport height
+            maxWidth: '100vw',
+            maxHeight: '100vh',
             position: 'relative',
             padding: '20px 0',
             display: 'flex',
