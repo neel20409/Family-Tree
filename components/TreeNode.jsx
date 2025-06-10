@@ -316,6 +316,8 @@ const FamilyTreeApp = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [foundNode, setFoundNode] = useState(null);
   const t = useTranslation(isGujarati);
+  const [initialTouchDistance, setInitialTouchDistance] = useState(null);
+  const [initialZoom, setInitialZoom] = useState(1);
 
   const sources = [
     {
@@ -400,7 +402,11 @@ const FamilyTreeApp = () => {
       const scrollWidth = container.scrollWidth;
       const clientWidth = container.clientWidth;
       const maxScroll = scrollWidth - clientWidth;
-      const centerScroll = maxScroll / 2;
+      const centerScroll = Math.max(0, maxScroll / 2);
+      
+      // Add padding to ensure content doesn't get cut off
+      container.style.paddingLeft = `${clientWidth / 4}px`;
+      container.style.paddingRight = `${clientWidth / 4}px`;
       
       container.scrollTo({
         left: centerScroll,
@@ -413,6 +419,10 @@ const FamilyTreeApp = () => {
     e.preventDefault();
     if (!searchTerm.trim()) {
       setZoomLevel(1);
+      if (treeContainerRef.current) {
+        treeContainerRef.current.style.paddingLeft = '0';
+        treeContainerRef.current.style.paddingRight = '0';
+      }
       return;
     }
     const path = findPathByName(familyTree, searchTerm.trim());
@@ -421,20 +431,34 @@ const FamilyTreeApp = () => {
       setHighlightName(path[path.length - 1]);
       setActivePath(path);
       setZoomLevel(0.25);
-      setTimeout(() => {
+      
+      // Use requestAnimationFrame to ensure DOM updates before centering
+      requestAnimationFrame(() => {
         centerTree();
         if (treeContainerRef.current) {
           const nodeElement = document.querySelector('.node-box.highlighted');
           if (nodeElement) {
-            nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Calculate the center position
+            const containerRect = treeContainerRef.current.getBoundingClientRect();
+            const nodeRect = nodeElement.getBoundingClientRect();
+            const scrollLeft = nodeRect.left - containerRect.left - (containerRect.width / 2) + (nodeRect.width / 2);
+            
+            treeContainerRef.current.scrollTo({
+              left: Math.max(0, scrollLeft),
+              behavior: 'smooth'
+            });
           }
         }
-      }, 300);
+      });
     } else {
       setExpandPath([]);
       setHighlightName('');
       setActivePath([]);
       setZoomLevel(1);
+      if (treeContainerRef.current) {
+        treeContainerRef.current.style.paddingLeft = '0';
+        treeContainerRef.current.style.paddingRight = '0';
+      }
       alert(t('nameNotFound'));
     }
   };
@@ -446,6 +470,37 @@ const FamilyTreeApp = () => {
 
   const closeSourceModal = () => {
     setSourceModalOpen(false);
+  };
+
+  // Add this new function to calculate touch distance
+  const getTouchDistance = (touch1, touch2) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Add touch event handlers
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      setInitialTouchDistance(getTouchDistance(e.touches[0], e.touches[1]));
+      setInitialZoom(zoomLevel);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && initialTouchDistance !== null) {
+      e.preventDefault();
+      const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      const scale = (currentDistance / initialTouchDistance) * initialZoom;
+      
+      // Limit zoom between 0.1 and 2
+      const newZoom = Math.min(Math.max(scale, 0.1), 2);
+      setZoomLevel(newZoom);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setInitialTouchDistance(null);
   };
 
   return (
@@ -494,20 +549,32 @@ const FamilyTreeApp = () => {
         style={{
           transform: `scale(${zoomLevel})`,
           transformOrigin: 'center center',
-          transition: 'transform 0.3s ease-out',
+          transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
-          scrollBehavior: 'smooth'
+          scrollBehavior: 'smooth',
+          touchAction: 'none',
+          minWidth: '100%',
+          position: 'relative'
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        <TreeNode 
-          onPhotoClick={handlePhotoClick} 
-          expandPath={expandPath} 
-          highlightName={highlightName} 
-          activePath={activePath} 
-          onMaxDepth={handleMaxDepth}
-          isGujarati={isGujarati}
-        />
+        <div style={{ 
+          display: 'inline-block',
+          minWidth: '100%',
+          padding: '20px 0'
+        }}>
+          <TreeNode 
+            onPhotoClick={handlePhotoClick} 
+            expandPath={expandPath} 
+            highlightName={highlightName} 
+            activePath={activePath} 
+            onMaxDepth={handleMaxDepth}
+            isGujarati={isGujarati}
+          />
+        </div>
       </div>
       {modalOpen && modalImg && (
         <div className="modal-overlay" onClick={closeModal}>
