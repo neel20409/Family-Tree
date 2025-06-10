@@ -396,26 +396,6 @@ const FamilyTreeApp = () => {
     setMaxExpandedDepth(0);
   }, [searchTerm]);
 
-  // Function to center the tree
-  const centerTree = () => {
-    if (treeContainerRef.current) {
-      const container = treeContainerRef.current;
-      const scrollWidth = container.scrollWidth;
-      const clientWidth = container.clientWidth;
-      const maxScroll = scrollWidth - clientWidth;
-      const centerScroll = Math.max(0, maxScroll / 2);
-      
-      // Add padding to ensure content doesn't get cut off
-      container.style.paddingLeft = `${clientWidth / 4}px`;
-      container.style.paddingRight = `${clientWidth / 4}px`;
-      
-      container.scrollTo({
-        left: centerScroll,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) {
@@ -435,21 +415,12 @@ const FamilyTreeApp = () => {
       setZoomLevel(1); // Keep tree container at normal scale
       setPageZoom(0.25); // Zoom out the entire page
       
-      // Use requestAnimationFrame to ensure DOM updates before centering
+      // Use requestAnimationFrame to ensure DOM updates
       requestAnimationFrame(() => {
-        centerTree();
         if (treeContainerRef.current) {
           const nodeElement = document.querySelector('.node-box.highlighted');
           if (nodeElement) {
-            // Calculate the center position
-            const containerRect = treeContainerRef.current.getBoundingClientRect();
-            const nodeRect = nodeElement.getBoundingClientRect();
-            const scrollLeft = nodeRect.left - containerRect.left - (containerRect.width / 2) + (nodeRect.width / 2);
-            
-            treeContainerRef.current.scrollTo({
-              left: Math.max(0, scrollLeft),
-              behavior: 'smooth'
-            });
+            nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }
       });
@@ -575,7 +546,9 @@ const FamilyTreeApp = () => {
             touchAction: 'none',
             minWidth: '100%',
             position: 'relative',
-            padding: '20px 0'
+            padding: '20px 0',
+            display: 'flex',
+            justifyContent: 'flex-start'
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
