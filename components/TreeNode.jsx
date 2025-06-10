@@ -514,77 +514,87 @@ const FamilyTreeApp = () => {
       transition: 'transform 0.3s ease-out',
       width: `${100 / pageZoom}%`,
       height: `${100 / pageZoom}%`,
-      position: 'relative'
+      position: 'relative',
+      overflow: 'auto',
+      minHeight: '100vh'
     }}>
-      <div className="search-bar-topright">
-        <form onSubmit={handleSearch}>
-          <input
-            type="text"
-            className="search-bar"
-            placeholder={t('searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </form>
-      </div>
-
-      <div className="source-btn-container" style={{flexDirection: 'column', alignItems: 'center', width: 'auto'}}>
-        <button className="source-btn" onClick={() => setSourceModalOpen(true)}>
-          {t('source')}
-        </button>
-        <div className="lang-toggle-row">
-          <span className={`lang-label${!isGujarati ? ' selected' : ''}`}>English</span>
-          <div
-            className={`lang-toggle${isGujarati ? ' gujarati' : ' english'}`}
-            onClick={() => setIsGujarati(v => !v)}
-          >
-            <span className="lang-thumb">
-              {!isGujarati ? (
-                <span role="img" aria-label="English">🇬🇧</span>
-              ) : (
-                <span role="img" aria-label="Gujarati">🇮🇳</span>
-              )}
-            </span>
-          </div>
-          <span className={`lang-label${isGujarati ? ' selected' : ''}`}>Gujarati</span>
+      <div style={{
+        width: '100%',
+        minHeight: '100vh',
+        position: 'relative',
+        overflow: 'visible'
+      }}>
+        <div className="search-bar-topright">
+          <form onSubmit={handleSearch}>
+            <input
+              type="text"
+              className="search-bar"
+              placeholder={t('searchPlaceholder')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </form>
         </div>
-      </div>
 
-      <div className="heading-center">
-        <h1 className="neon-heading">{t('rootsOfFamily')}</h1>
-      </div>
+        <div className="source-btn-container" style={{flexDirection: 'column', alignItems: 'center', width: 'auto'}}>
+          <button className="source-btn" onClick={() => setSourceModalOpen(true)}>
+            {t('source')}
+          </button>
+          <div className="lang-toggle-row">
+            <span className={`lang-label${!isGujarati ? ' selected' : ''}`}>English</span>
+            <div
+              className={`lang-toggle${isGujarati ? ' gujarati' : ' english'}`}
+              onClick={() => setIsGujarati(v => !v)}
+            >
+              <span className="lang-thumb">
+                {!isGujarati ? (
+                  <span role="img" aria-label="English">🇬🇧</span>
+                ) : (
+                  <span role="img" aria-label="Gujarati">🇮🇳</span>
+                )}
+              </span>
+            </div>
+            <span className={`lang-label${isGujarati ? ' selected' : ''}`}>Gujarati</span>
+          </div>
+        </div>
 
-      <div 
-        className="tree-container" 
-        ref={treeContainerRef}
-        style={{
-          transform: `scale(${zoomLevel})`,
-          transformOrigin: 'center center',
-          transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          scrollBehavior: 'smooth',
-          touchAction: 'none',
-          minWidth: '100%',
-          position: 'relative'
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div style={{ 
-          display: 'inline-block',
-          minWidth: '100%',
-          padding: '20px 0'
-        }}>
-          <TreeNode 
-            onPhotoClick={handlePhotoClick} 
-            expandPath={expandPath} 
-            highlightName={highlightName} 
-            activePath={activePath} 
-            onMaxDepth={handleMaxDepth}
-            isGujarati={isGujarati}
-          />
+        <div className="heading-center">
+          <h1 className="neon-heading">{t('rootsOfFamily')}</h1>
+        </div>
+
+        <div 
+          className="tree-container" 
+          ref={treeContainerRef}
+          style={{
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: 'center center',
+            transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth',
+            touchAction: 'none',
+            minWidth: '100%',
+            position: 'relative',
+            padding: '20px 0'
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div style={{ 
+            display: 'inline-block',
+            minWidth: '100%',
+            padding: '20px 0'
+          }}>
+            <TreeNode 
+              onPhotoClick={handlePhotoClick} 
+              expandPath={expandPath} 
+              highlightName={highlightName} 
+              activePath={activePath} 
+              onMaxDepth={handleMaxDepth}
+              isGujarati={isGujarati}
+            />
+          </div>
         </div>
       </div>
       {modalOpen && modalImg && (
