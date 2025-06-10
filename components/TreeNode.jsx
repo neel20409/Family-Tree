@@ -318,6 +318,7 @@ const FamilyTreeApp = () => {
   const t = useTranslation(isGujarati);
   const [initialTouchDistance, setInitialTouchDistance] = useState(null);
   const [initialZoom, setInitialZoom] = useState(1);
+  const [pageZoom, setPageZoom] = useState(1);
 
   const sources = [
     {
@@ -419,6 +420,7 @@ const FamilyTreeApp = () => {
     e.preventDefault();
     if (!searchTerm.trim()) {
       setZoomLevel(1);
+      setPageZoom(1);
       if (treeContainerRef.current) {
         treeContainerRef.current.style.paddingLeft = '0';
         treeContainerRef.current.style.paddingRight = '0';
@@ -430,7 +432,8 @@ const FamilyTreeApp = () => {
       setExpandPath(path);
       setHighlightName(path[path.length - 1]);
       setActivePath(path);
-      setZoomLevel(0.25);
+      setZoomLevel(1); // Keep tree container at normal scale
+      setPageZoom(0.25); // Zoom out the entire page
       
       // Use requestAnimationFrame to ensure DOM updates before centering
       requestAnimationFrame(() => {
@@ -455,6 +458,7 @@ const FamilyTreeApp = () => {
       setHighlightName('');
       setActivePath([]);
       setZoomLevel(1);
+      setPageZoom(1);
       if (treeContainerRef.current) {
         treeContainerRef.current.style.paddingLeft = '0';
         treeContainerRef.current.style.paddingRight = '0';
@@ -504,7 +508,14 @@ const FamilyTreeApp = () => {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{
+      transform: `scale(${pageZoom})`,
+      transformOrigin: 'top center',
+      transition: 'transform 0.3s ease-out',
+      width: `${100 / pageZoom}%`,
+      height: `${100 / pageZoom}%`,
+      position: 'relative'
+    }}>
       <div className="search-bar-topright">
         <form onSubmit={handleSearch}>
           <input
