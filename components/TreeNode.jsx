@@ -540,18 +540,16 @@ const FamilyTreeApp = () => {
             transform: `scale(${zoomLevel})`,
             transformOrigin: 'center center',
             transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
-            overflow: 'auto',                // <-- Enable both scrollbars
+            overflow: 'auto', // Enables both scrollbars as needed
             WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
             touchAction: 'none',
-            minWidth: '100vw',               // <-- Ensure full viewport width
-            minHeight: '100vh',              // <-- Ensure full viewport height
-            maxWidth: '100vw',
-            maxHeight: '100vh',
+            width: '100vw',      // Allow horizontal scrolling
+            height: '100vh',     // Allow vertical scrolling
             position: 'relative',
             padding: '20px 0',
-            display: 'flex',
-            justifyContent: 'flex-start'
+            display: 'block',    // Use block for natural overflow
+            // Remove minWidth, maxWidth, minHeight, maxHeight, justifyContent
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
