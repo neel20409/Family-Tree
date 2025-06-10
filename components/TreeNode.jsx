@@ -451,13 +451,15 @@ const FamilyTreeApp = () => {
   return (
     <div className="app-container">
       <div className="search-bar-topright">
-        <input
-          type="text"
-          className="search-bar"
-          placeholder={t('searchPlaceholder')}
-          value={searchTerm}
-          onChange={handleSearch}
-        />
+        <form onSubmit={handleSearch}>
+          <input
+            type="text"
+            className="search-bar"
+            placeholder={t('searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </form>
       </div>
 
       <div className="source-btn-container" style={{flexDirection: 'column', alignItems: 'center', width: 'auto'}}>
