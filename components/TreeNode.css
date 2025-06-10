@@ -51,9 +51,9 @@ body {
   border: 1.5px solid rgba(255,255,255,0.25);
   margin: 40px auto;
   min-width: fit-content;
-  max-width: none;
-  overflow-x: auto;
-  overflow-y: auto;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(57,255,246,0.3) transparent;
   -webkit-overflow-scrolling: touch;
@@ -61,10 +61,9 @@ body {
   position: relative;
   touch-action: pan-x pan-y;
   cursor: grab;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: inline-block;
   transform-origin: center center;
+  overscroll-behavior: contain;
 }
 
 .tree-container:active {
@@ -959,4 +958,30 @@ body {
 }
 .lang-toggle.gujarati .lang-thumb {
   left: 71px;
-} 
+}
+
+/* Custom scrollbar styling */
+.tree-container::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.3s;
+}
+
+.tree-container:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.tree-container:hover::-webkit-scrollbar-thumb,
+.tree-container:active::-webkit-scrollbar-thumb,
+.tree-container:focus::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+}
