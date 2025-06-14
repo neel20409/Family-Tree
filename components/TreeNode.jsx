@@ -319,6 +319,7 @@ const FamilyTreeApp = () => {
   const [initialTouchDistance, setInitialTouchDistance] = useState(null);
   const [initialZoom, setInitialZoom] = useState(1);
   const [pageZoom, setPageZoom] = useState(1);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const sources = [
     {
@@ -567,25 +568,9 @@ const FamilyTreeApp = () => {
 
       {/* --- Tree Container --- */}
       <div
-        className="tree-container"
+        className={`tree-container${isFullScreen ? ' fullscreen-tree' : ''}`}
         ref={treeContainerRef}
-        style={{
-          flex: 1,
-          width: '100vw',
-          height: 'calc(100vh - 110px)', // Subtract top bar height
-          overflow: 'auto',
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
-          margin: 0,
-          boxShadow: 'none',
-          minHeight: 0,
-          minWidth: 0,
-          transform: `scale(${zoomLevel})`,
-          transformOrigin: 'top left',
-          transition: initialTouchDistance === null ? 'transform 0.3s ease-out' : 'none',
-          position: 'relative'
-        }}
+        style={isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {}}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
