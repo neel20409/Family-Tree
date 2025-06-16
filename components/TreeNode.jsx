@@ -570,14 +570,7 @@ const FamilyTreeApp = () => {
       <div
         className={`tree-container${isFullScreen ? ' fullscreen-tree' : ''}`}
         ref={treeContainerRef}
-        style={{
-          overflow: "auto",
-          width: "100vw",
-          height: "100vh",
-          transform: `scale(${zoomLevel})`,
-          transformOrigin: "0 0",
-          ...(isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {})
-        }}
+      style={isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {}}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
