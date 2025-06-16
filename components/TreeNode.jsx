@@ -189,10 +189,8 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
         >
           {node.photo ? (
             <picture>
-              <source srcSet={getOptimizedPhotoBase(node.photo) + '.avif'} type="image/avif" />
-              <source srcSet={getOptimizedPhotoBase(node.photo) + '.webp'} type="image/webp" />
               <img 
-                src={getOptimizedPhotoBase(node.photo) + '.jpeg'} 
+                src={getOptimizedPhotoBase(node.photo) } 
                 alt={node.name} 
                 style={{ 
                   width: '85px', 
@@ -201,6 +199,7 @@ const TreeNode = ({ node = familyTree, level = 0, onPhotoClick, expandPath = [],
                   borderRadius: '50%',
                   display: imageLoadError ? 'none' : 'block'
                 }}
+                onClick={() => setEnlargedImage(getOptimizedPhotoBase(node.photo) + '.avif')}
                 onError={() => setImageLoadError(true)}
                 onLoad={() => setImageLoadError(false)}
               />
@@ -670,6 +669,8 @@ const FamilyTreeApp = () => {
               maxHeight: "90vh",
               borderRadius: "12px",
               boxShadow: "0 0 32px #000",
+              objectFit: "contain",
+              background: "#222",
             }}
             onClick={e => e.stopPropagation()}
           />
