@@ -320,40 +320,41 @@ const FamilyTreeApp = () => {
   const [initialZoom, setInitialZoom] = useState(1);
   const [pageZoom, setPageZoom] = useState(1);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   const sources = [
     {
       title: "Source 1",
       description: "Original family tree documentation",
-      image: "/photos/source1.jpeg",
+      image: "optimized/source1.avif",
       type: "document",
       date: "2024-03-15"
     },
     {
       title: "Source 2",
       description: "Historical records and archives",
-      image: "/photos/source2.jpeg",
+      image: "optimized/source2.avif",
       type: "archive",
       date: "2024-03-14"
     },
     {
       title: "Source 3",
       description: "Family photographs collection",
-      image: "/photos/source3.jpeg",
+      image: "optimized/source3.avif",
       type: "photo",
       date: "2024-03-13"
     },
     {
       title: "Source 4",
       description: "Ancestral documents and certificates",
-      image: "/photos/source4.jpeg",
+      image: "optimized/source4.avif",
       type: "certificate",
       date: "2024-03-12"
     },
     {
       title: "Source 5",
       description: "Family heritage artifacts",
-      image: "/photos/source5.jpeg",
+      image: "optimized/source5.avif",
       type: "artifact",
       date: "2024-03-11"
     }
@@ -570,7 +571,14 @@ const FamilyTreeApp = () => {
       <div
         className={`tree-container${isFullScreen ? ' fullscreen-tree' : ''}`}
         ref={treeContainerRef}
-        style={isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {}}
+        style={{
+          overflow: "auto",
+          width: "100vw",
+          height: "100vh",
+          transform: `scale(${zoomLevel})`,
+          transformOrigin: "0 0",
+          ...(isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {})
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -612,7 +620,13 @@ const FamilyTreeApp = () => {
                   <div className="source-item-type">{src.type}</div>
                   <div className="source-item-date">{src.date}</div>
                   <div className="source-item-preview">
-                    <img src={src.image} alt={src.title} className="source-thumbnail" />
+                    <img
+                      src={src.image}
+                      alt={src.title}
+                      className="source-thumbnail"
+                      style={{ cursor: "zoom-in" }}
+                      onClick={() => setEnlargedImage(src.image)}
+                    />
                   </div>
                 </div>
               ))}
@@ -630,6 +644,51 @@ const FamilyTreeApp = () => {
               <img src={selectedSourceImage} alt="Source" className="enlarged-image" />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Enlarged Image Modal */}
+      {enlargedImage && (
+        <div
+          className="enlarged-image-modal"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+          }}
+          onClick={() => setEnlargedImage(null)}
+        >
+          <img
+            src={enlargedImage}
+            alt="Enlarged"
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              borderRadius: "12px",
+              boxShadow: "0 0 32px #000",
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            style={{
+              position: "absolute",
+              top: 24,
+              right: 32,
+              fontSize: 32,
+              color: "#fff",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+            onClick={() => setEnlargedImage(null)}
+            aria-label="Close"
+          >
+            &times;
+          </button>
         </div>
       )}
     </div>

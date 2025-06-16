@@ -743,6 +743,14 @@ body {
 /* .scroll-button, .scroll-left, .scroll-right { ... } */
 
 .tree-container {
+  overflow: auto !important;
+  width: 100vw;
+  height: 100vh;
+  /* Optional for touch devices: */
+  -webkit-overflow-scrolling: touch;
+}
+
+.tree-container {
   width: 100vw !important;
   height: 100vh !important;
   max-width: none !important;
