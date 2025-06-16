@@ -584,7 +584,54 @@ const FamilyTreeApp = () => {
           isGujarati={isGujarati}
         />
       </div>
-      {/* ...modals remain unchanged... */}
+
+      {/* --- Modals --- */}
+      {/* Photo Modal */}
+      {modalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <div className="modal-body">
+              <img src={modalImg} alt="Enlarged" className="enlarged-image" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Source Modal */}
+      {sourceModalOpen && (
+        <div className="source-modal-overlay" onClick={closeSourceModal}>
+          <div className="source-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeSourceModal}>&times;</button>
+            <h2 className="source-modal-title">{t('sourceDocumentation')}</h2>
+            {/* Example content: */}
+            <div className="source-list">
+              {sources.map((src, idx) => (
+                <div key={idx} className="source-item">
+                  <div className="source-item-name">{src.title}</div>
+                  <div className="source-item-type">{src.type}</div>
+                  <div className="source-item-date">{src.date}</div>
+                  <div className="source-item-preview">
+                    <img src={src.image} alt={src.title} className="source-thumbnail" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Source Image Modal */}
+      {sourceImageModalOpen && (
+        <div className="modal-overlay" onClick={closeSourceImageModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeSourceImageModal}>&times;</button>
+            <div className="modal-body">
+              <img src={selectedSourceImage} alt="Source" className="enlarged-image" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
