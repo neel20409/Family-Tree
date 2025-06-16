@@ -575,6 +575,7 @@ const FamilyTreeApp = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+   
         <TreeNode
           onPhotoClick={handlePhotoClick}
           expandPath={expandPath}
@@ -583,6 +584,7 @@ const FamilyTreeApp = () => {
           onMaxDepth={handleMaxDepth}
           isGujarati={isGujarati}
         />
+             <div style={{ height: "500px" }} />
       </div>
 
       {/* --- Modals --- */}
