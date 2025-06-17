@@ -571,12 +571,11 @@ const FamilyTreeApp = () => {
       <div
         className={`tree-container${isFullScreen ? ' fullscreen-tree' : ''}`}
         ref={treeContainerRef}
-      style={isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {}}
+        style={isFullScreen ? { width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0, right: 0 } : {}}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-   
         <TreeNode
           onPhotoClick={handlePhotoClick}
           expandPath={expandPath}
@@ -585,7 +584,7 @@ const FamilyTreeApp = () => {
           onMaxDepth={handleMaxDepth}
           isGujarati={isGujarati}
         />
-             <div style={{ height: "500px" }} />
+        <div style={{ height: "500px" }} />
       </div>
 
       {/* --- Modals --- */}
