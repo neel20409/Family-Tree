@@ -320,6 +320,7 @@ const FamilyTreeApp = () => {
   const [pageZoom, setPageZoom] = useState(1);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState(null);
+  const [showTooltip, setShowTooltip] = useState(true);
 
   const sources = [
     {
@@ -474,8 +475,6 @@ const FamilyTreeApp = () => {
   const handleTouchEnd = () => {
     setInitialTouchDistance(null);
   };
-
-  const [showTooltip, setShowTooltip] = useState(true);
 
   return (
     <div
@@ -689,51 +688,9 @@ const FamilyTreeApp = () => {
           </button>
         </div>
       )}
-      <div style={{ position: "relative", display: "inline-block", margin: 40 }}>
-        <img
-          src="/photos/kaduji.avif"
-          alt="Kaduji"
-          style={{ width: 85, height: 85, borderRadius: "50%", cursor: "pointer" }}
-          onClick={() => setShowTooltip(false)}
-        />
-        {showTooltip && (
-          <div
-            style={{
-              position: "absolute",
-              top: "-60px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 2000,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center"
-            }}
-          >
-            <div style={{
-              background: "#fff",
-              color: "#222",
-              border: "1px solid #888",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              fontSize: "14px",
-              position: "relative",
-              whiteSpace: "nowrap"
-            }}>
-              Click here to generate your family tree!
-            </div>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderLeft: "10px solid transparent",
-              borderRight: "10px solid transparent",
-              borderTop: "10px solid #fff",
-              filter: "drop-shadow(0 -1px 1px #888)",
-              marginTop: "-1px"
-            }} />
-          </div>
-        )}
-      </div>
+    
+      
+ 
     </div>
   );
 };
