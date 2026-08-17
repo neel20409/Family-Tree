@@ -154,7 +154,7 @@ const familyTree = {
                                     deathDate: "--",
                                     children: [
                                       {name: "Dharm", gujaratiName: "ધર્મ", photo: "/photos/dharm.avif", birthDate: "17 Sep 2011", deathDate: "--"},
-                                      {name: "Vaishali", gujaratiName: "વૈશાલી", photo: "/photos/vaishali.avif", birthDate: "22 Mar 2009", deathDate: "30 Oct 2094"}
+                                      {name: "Vaishali", gujaratiName: "વૈશાલી", photo: "/photos/vaishali.avif", birthDate: "22 Mar 2009", deathDate: "--"}
                                     ]
                                   },
                                   {

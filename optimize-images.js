@@ -14,42 +14,9 @@ if (!fs.existsSync(optimizedDir)) {
     fs.mkdirSync(optimizedDir);
 }
 
-// Helper to normalize filename
-const normalizeFilename = (filename) => {
-    // Remove any 'copy' or 'copy X' from filename
-    const cleanName = filename.replace(/\s+copy(?:\s+\d+)?/i, '');
-    // Keep original case but ensure extension is lowercase
-    const nameWithoutExt = cleanName.replace(/\.(jpg|jpeg|png)$/i, '');
-    const ext = filename.match(/\.(jpg|jpeg|png)$/i)[1].toLowerCase();
-    return `${nameWithoutExt}.${ext}`;
-};
 
-// Helper to find case-insensitive file
-const findCaseInsensitiveFile = (dir, filename) => {
-    const files = fs.readdirSync(dir);
-    const lowerFilename = filename.toLowerCase();
-    return files.find(file => file.toLowerCase() === lowerFilename);
-};
 
-// Clean up duplicate files
-const cleanupDuplicates = () => {
-    const files = fs.readdirSync(optimizedDir);
-    const seen = new Set();
-    let removedCount = 0;
 
-    files.forEach(file => {
-        const normalized = normalizeFilename(file);
-        if (seen.has(normalized.toLowerCase())) {
-            fs.unlinkSync(path.join(optimizedDir, file));
-            console.log(`Removed duplicate: ${file}`);
-            removedCount++;
-        } else {
-            seen.add(normalized.toLowerCase());
-        }
-    });
-
-    console.log(`Cleaned up ${removedCount} duplicate files`);
-};
 
 // Fast image optimization settings
 const optimizeImage = async (inputPath, outputPath) => {
