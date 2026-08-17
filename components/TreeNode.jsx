@@ -168,72 +168,27 @@ function formatDate(dateStr, isGujarati) {
 }
 
 // --------------------------------------------------------------------------
-// Mobile-Optimized 3D Card Tilt Component
+// Clean Flat 2D Card Wrapper Component
 // --------------------------------------------------------------------------
-const TiltCard = React.forwardRef(({ children, className, style, onClick, parentShift = 0 }, ref) => {
-  const cardRef = useRef(null);
-  const combinedRef = (node) => {
-    cardRef.current = node;
-    if (typeof ref === 'function') ref(node);
-    else if (ref) ref.current = node;
-  };
-
-  const [transform3D, setTransform3D] = useState('rotateX(0deg) rotateY(0deg) translateZ(0px)');
-  const [sheenPos, setSheenPos] = useState({ x: 50, y: 50, opacity: 0 });
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotX = ((y - centerY) / centerY) * -8;
-    const rotY = ((x - centerX) / centerX) * 8;
-
-    setTransform3D(`rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateZ(10px) scale3d(1.02, 1.02, 1.02)`);
-    setSheenPos({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      opacity: 0.3
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setTransform3D('rotateX(0deg) rotateY(0deg) translateZ(0px) scale3d(1, 1, 1)');
-    setSheenPos(prev => ({ ...prev, opacity: 0 }));
-  };
-
+const CardWrapper = React.forwardRef(({ children, className, style, onClick, parentShift = 0 }, ref) => {
   return (
     <div
-      ref={combinedRef}
-      className={`card-3d-wrapper ${className}`}
+      ref={ref}
+      className={`card-wrapper ${className}`}
       style={{
         ...style,
-        transform: `translateX(${parentShift}px) perspective(1000px) ${transform3D}`,
-        transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.2s ease',
-        transformStyle: 'preserve-3d'
+        transform: `translateX(${parentShift}px)`,
+        transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.2s ease',
       }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       onClick={onClick}
     >
-      <div
-        className="card-3d-sheen"
-        style={{
-          background: `radial-gradient(circle at ${sheenPos.x}% ${sheenPos.y}%, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 65%)`,
-          opacity: sheenPos.opacity,
-          transition: 'opacity 0.25s ease'
-        }}
-      />
       {children}
     </div>
   );
 });
 
 // --------------------------------------------------------------------------
-// TreeNode Component & Distortion-Free SVG Branch Renderer
+// TreeNode Component & Flat 2D SVG Branch Lineage Renderer
 // --------------------------------------------------------------------------
 const TreeNode = ({
   node = familyTree,
@@ -389,7 +344,7 @@ const TreeNode = ({
 
   return (
     <div className={`tree-node level-${level} ${level === 0 ? 'root-node' : ''} ${isVisible ? 'visible' : ''}`}>
-      <TiltCard 
+      <CardWrapper 
         ref={parentCardRef}
         parentShift={parentShift}
         className={`node-box ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''} ${isHighlighted ? 'highlighted' : ''} ${isInActivePath ? 'active-path' : ''}`}
@@ -457,7 +412,7 @@ const TreeNode = ({
             <span className="date-value">{formatDate(node.deathDate, isGujarati)}</span>
           </div>
         </div>
-      </TiltCard>
+      </CardWrapper>
 
       {/* Children Container & SVG Lineage Bezier Branch Renderer */}
       {isExpanded && hasChildren && (
@@ -670,7 +625,7 @@ const FamilyTreeApp = () => {
   // Center Kaduji Bhatt (Root Node) card directly in the screen horizontal center on Reset Canvas
   const centerCanvas = useCallback(() => {
     if (viewportRef.current && treeContainerRef.current) {
-      const rootCard = document.querySelector('.root-node > .card-3d-wrapper > .node-box');
+      const rootCard = document.querySelector('.root-node > .card-wrapper > .node-box');
       const vWidth = viewportRef.current.clientWidth;
       const initialZoom = isMobile ? 0.75 : 1;
 
@@ -910,10 +865,8 @@ const FamilyTreeApp = () => {
 
   return (
     <div className="app-container">
-      {/* Dynamic Ambient Background Glowing Orbs for Live 3D Atmosphere */}
-      <div className="bg-glow-orb orb-1" />
-      <div className="bg-glow-orb orb-2" />
-      <div className="bg-glow-orb orb-3" />
+      {/* Subtle Static Clean Backdrop Gradient */}
+      <div className="bg-clean-gradient" />
 
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
       <header className="main-header">
