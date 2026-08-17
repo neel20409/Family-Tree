@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import './TreeNode.css';
@@ -205,7 +206,6 @@ const TreeNode = ({
 }) => {
   const t = useTranslation(isGujarati);
   const [isExpanded, setIsExpanded] = useState(level < 2);
-  const [isVisible, setIsVisible] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
   
   const parentCardRef = useRef(null);
@@ -231,10 +231,6 @@ const TreeNode = ({
   }, [visibleGenLevel, forceExpand, level]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, level * 80);
-
     if (!popAudioRef.current) {
       popAudioRef.current = new Audio('pop.mp3');
       popAudioRef.current.load();
@@ -243,8 +239,6 @@ const TreeNode = ({
     if (expandPath && expandPath.includes(node.name)) {
       setIsExpanded(true);
     }
-
-    return () => clearTimeout(timer);
   }, [level, expandPath, node.name]);
 
   // Calculate Bezier SVG Curves & Parent Shift to align parent card directly over children cards
@@ -343,8 +337,13 @@ const TreeNode = ({
   const colorStyle = getNodeColors(level);
 
   return (
-    <div className={`tree-node level-${level} ${level === 0 ? 'root-node' : ''} ${isVisible ? 'visible' : ''}`}>
-      <CardWrapper 
+    <motion.div
+      className={`tree-node level-${level} ${level === 0 ? 'root-node' : ''}`}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, delay: level * 0.08, ease: [0.4, 0, 0.2, 1] }}
+    >
+      <CardWrapper
         ref={parentCardRef}
         parentShift={parentShift}
         className={`node-box ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''} ${isHighlighted ? 'highlighted' : ''} ${isInActivePath ? 'active-path' : ''}`}
@@ -416,16 +415,20 @@ const TreeNode = ({
 
       {/* Children Container & SVG Lineage Bezier Branch Renderer */}
       {isExpanded && hasChildren && (
-        <div 
-          className="tree-children-wrapper" 
-          style={{ 
-            position: "relative", 
-            display: "flex", 
-            flexDirection: "column", 
-            alignItems: "center",
-            width: "max-content"
-          }}
-        >
+          <motion.div
+            className="tree-children-wrapper"
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: "max-content",
+              transformOrigin: "top center"
+            }}
+            initial={{ opacity: 0, scaleY: 0.85, y: -12 }}
+            animate={{ opacity: 1, scaleY: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          >
           {/* SVG Canvas connecting parent bottom to children top */}
           <svg
             className="lineage-svg-canvas"
@@ -512,9 +515,9 @@ const TreeNode = ({
               </div>
             ))}
           </div>
-        </div>
+          </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -1016,77 +1019,109 @@ const FamilyTreeApp = () => {
       </div>
 
       {/* --- Mobile Full-Screen Search Modal --- */}
-      {isMobile && mobileSearchOpen && (
-        <div className="modal-overlay" onClick={() => setMobileSearchOpen(false)}>
-          <div className="mobile-search-modal card-glass" onClick={e => e.stopPropagation()}>
-            <div className="mobile-search-header">
-              <h3>🔍 Search Family Member</h3>
-              <button className="modal-close" onClick={() => setMobileSearchOpen(false)}>&times;</button>
-            </div>
-            <form onSubmit={handleSearch} className="search-form">
-              <div className="search-input-wrapper">
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  autoFocus
-                />
-                <button type="submit" className="action-btn search-submit-btn">
-                  Search
-                </button>
+      <AnimatePresence>
+        {isMobile && mobileSearchOpen && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setMobileSearchOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="mobile-search-modal card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            >
+              <div className="mobile-search-header">
+                <h3>🔍 Search Family Member</h3>
+                <button className="modal-close" onClick={() => setMobileSearchOpen(false)}>&times;</button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <form onSubmit={handleSearch} className="search-form">
+                <div className="search-input-wrapper">
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder={t('searchPlaceholder')}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    autoFocus
+                  />
+                  <button type="submit" className="action-btn search-submit-btn">
+                    Search
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Mobile Member Bottom Sheet Drawer --- */}
-      {isMobile && selectedMember && (
-        <div className="modal-overlay" onClick={() => setSelectedMember(null)}>
-          <div className="mobile-member-sheet card-glass" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedMember(null)}>&times;</button>
-            <div className="member-sheet-header">
-              <div className="member-sheet-avatar">
-                {selectedMember.photo ? (
-                  <img src={`${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
-                ) : (
-                  <span>{selectedMember.name ? selectedMember.name.substring(0, 2).toUpperCase() : '??'}</span>
-                )}
+      <AnimatePresence>
+        {isMobile && selectedMember && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setSelectedMember(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="mobile-member-sheet card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            >
+              <button className="modal-close" onClick={() => setSelectedMember(null)}>&times;</button>
+              <div className="member-sheet-header">
+                <div className="member-sheet-avatar">
+                  {selectedMember.photo ? (
+                    <img src={`${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
+                  ) : (
+                    <span>{selectedMember.name ? selectedMember.name.substring(0, 2).toUpperCase() : '??'}</span>
+                  )}
+                </div>
+                <div className="member-sheet-info">
+                  <span className="gen-pill">{selectedMemberLevel === 0 ? t('rootAncestor') : `${t('generation')} ${selectedMemberLevel}`}</span>
+                  <h2>{isGujarati && selectedMember.gujaratiName ? selectedMember.gujaratiName : selectedMember.name}</h2>
+                  {isGujarati && selectedMember.name && <span className="subname">{selectedMember.name}</span>}
+                </div>
               </div>
-              <div className="member-sheet-info">
-                <span className="gen-pill">{selectedMemberLevel === 0 ? t('rootAncestor') : `${t('generation')} ${selectedMemberLevel}`}</span>
-                <h2>{isGujarati && selectedMember.gujaratiName ? selectedMember.gujaratiName : selectedMember.name}</h2>
-                {isGujarati && selectedMember.name && <span className="subname">{selectedMember.name}</span>}
-              </div>
-            </div>
 
-            <div className="member-sheet-dates">
-              <div className="sheet-date-box">
-                <span className="date-label">{t('born')}</span>
-                <span className="date-val">{formatDate(selectedMember.birthDate, isGujarati)}</span>
+              <div className="member-sheet-dates">
+                <div className="sheet-date-box">
+                  <span className="date-label">{t('born')}</span>
+                  <span className="date-val">{formatDate(selectedMember.birthDate, isGujarati)}</span>
+                </div>
+                <div className="sheet-date-box">
+                  <span className="date-label">{t('passed')}</span>
+                  <span className="date-val">{formatDate(selectedMember.deathDate, isGujarati)}</span>
+                </div>
               </div>
-              <div className="sheet-date-box">
-                <span className="date-label">{t('passed')}</span>
-                <span className="date-val">{formatDate(selectedMember.deathDate, isGujarati)}</span>
-              </div>
-            </div>
 
-            {selectedMember.photo && (
-              <button 
-                className="drawer-action-btn primary"
-                onClick={() => {
-                  handlePhotoClick(getOptimizedPhotoBase(selectedMember.photo));
-                  setSelectedMember(null);
-                }}
-              >
-                📸 View Full Photo
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+              {selectedMember.photo && (
+                <button
+                  className="drawer-action-btn primary"
+                  onClick={() => {
+                    handlePhotoClick(getOptimizedPhotoBase(selectedMember.photo));
+                    setSelectedMember(null);
+                  }}
+                >
+                  📸 View Full Photo
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Infinite Seamless 2D Canvas Viewport --- */}
       <main
@@ -1124,60 +1159,114 @@ const FamilyTreeApp = () => {
       </main>
 
       {/* --- Photo Lightbox Modal --- */}
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-content card-glass" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">&times;</button>
-            <div className="modal-body">
-              <picture>
-                <source srcSet={`${modalImg}.avif`} type="image/avif" />
-                <source srcSet={`${modalImg}.webp`} type="image/webp" />
-                <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
-              </picture>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setModalOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="modal-content card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            >
+              <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">&times;</button>
+              <div className="modal-body">
+                <picture>
+                  <source srcSet={`${modalImg}.avif`} type="image/avif" />
+                  <source srcSet={`${modalImg}.webp`} type="image/webp" />
+                  <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
+                </picture>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Source Documentation Modal --- */}
-      {sourceModalOpen && (
-        <div className="modal-overlay" onClick={() => setSourceModalOpen(false)}>
-          <div className="source-modal-content card-glass" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSourceModalOpen(false)} aria-label="Close">&times;</button>
-            <h2 className="source-modal-title">📜 {t('sourceDocumentation')}</h2>
-            <div className="source-grid">
-              {sources.map((src, idx) => (
-                <div key={idx} className="source-card">
-                  <div className="source-card-header">
-                    <span className="source-type-pill">{src.type}</span>
-                    <span className="source-date">{src.date}</span>
-                  </div>
-                  <h3 className="source-title">{src.title}</h3>
-                  <p className="source-desc">{src.description}</p>
-                  <div className="source-thumbnail-container" onClick={() => setEnlargedSourceImage(src.image)}>
-                    <img src={src.image} alt={src.title} className="source-thumbnail" />
-                    <div className="source-hover-overlay">
-                      <span>🔍 {t('view')}</span>
+      <AnimatePresence>
+        {sourceModalOpen && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setSourceModalOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="source-modal-content card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            >
+              <button className="modal-close" onClick={() => setSourceModalOpen(false)} aria-label="Close">&times;</button>
+              <h2 className="source-modal-title">📜 {t('sourceDocumentation')}</h2>
+              <div className="source-grid">
+                {sources.map((src, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="source-card"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.06, duration: 0.3 }}
+                  >
+                    <div className="source-card-header">
+                      <span className="source-type-pill">{src.type}</span>
+                      <span className="source-date">{src.date}</span>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+                    <h3 className="source-title">{src.title}</h3>
+                    <p className="source-desc">{src.description}</p>
+                    <div className="source-thumbnail-container" onClick={() => setEnlargedSourceImage(src.image)}>
+                      <img src={src.image} alt={src.title} className="source-thumbnail" />
+                      <div className="source-hover-overlay">
+                        <span>🔍 {t('view')}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Enlarged Source Image Lightbox --- */}
-      {enlargedSourceImage && (
-        <div className="modal-overlay" onClick={() => setEnlargedSourceImage(null)}>
-          <div className="modal-content card-glass" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
-            <div className="modal-body">
-              <img src={enlargedSourceImage} alt="Enlarged Document" className="enlarged-image" />
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {enlargedSourceImage && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setEnlargedSourceImage(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="modal-content card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            >
+              <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
+              <div className="modal-body">
+                <img src={enlargedSourceImage} alt="Enlarged Document" className="enlarged-image" />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

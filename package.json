@@ -13,6 +13,7 @@
     "@react-spring/web": "^10.0.1",
     "@tailwindcss/vite": "^4.1.8",
     "canvas-confetti": "^1.9.3",
+    "framer-motion": "^13.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "sharp": "^0.34.2",

@@ -35,9 +35,6 @@ export default defineConfig({
     },
     port: 3000,
     strictPort: true,
-    host: true,
-    headers: {
-      'Cache-Control': 'public, max-age=31536000'
-    }
+    host: true
   }
 })
