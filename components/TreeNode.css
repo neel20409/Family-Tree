@@ -84,6 +84,14 @@ html, body {
   gap: 10px;
 }
 
+.brand-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
 .neon-heading {
   font-family: 'Playfair Display', serif;
   font-size: 1.35rem;

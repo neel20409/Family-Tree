@@ -916,6 +916,7 @@ const FamilyTreeApp = () => {
       <header className="main-header">
         <div className="header-left">
           <div className="brand-title">
+            <img src="/Logo_Bhatt_Family.png" alt="Bhatt Family Logo" className="brand-logo" />
             <h1 className="neon-heading">{isMobile ? (isGujarati ? 'ભટ્ટ પરિવાર' : 'Bhatt Lineage') : t('rootsOfFamily')}</h1>
             <span className="members-badge">🌱 {TOTAL_MEMBERS}</span>
           </div>

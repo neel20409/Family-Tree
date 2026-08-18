@@ -206,8 +206,8 @@ const familyTree = {
                                 birthDate: "07 Aug 1976",
                                 deathDate: "--",
                                 children: [
-                                  {name: "Krishna", gujaratiName: "કૃષ્ણા", photo: "/photos/krishna.avif", birthDate: "19 Apr 2002", deathDate: "--"},
-                                  {name: "Naiya", gujaratiName: "નૈયા", photo: "/photos/naiya.avif", birthDate: "16 Jan 2007", deathDate: "--"}
+                                  {name: "Krishna", gujaratiName: "કૃષ્ણા", photo: "/photos/krishna.avif", birthDate: "19 Apr 2002", deathDate: "--",children:[{name:"Rushi",gujaratiName:"",photo:"",birthDate:"",deathDate:""}]},
+                                  {name: "Naiya", gujaratiName: "નૈયા", photo: "/photos/naiya.avif", birthDate: "16 Jan 2007", deathDate: "--",children:[]}
                                 ]
                               }
                             ]
