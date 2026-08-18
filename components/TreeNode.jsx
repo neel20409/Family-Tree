@@ -123,10 +123,23 @@ const useTranslation = (isGujarati) => {
   return (key) => translations[isGujarati ? 'gu' : 'en'][key] || key;
 };
 
+// Base URL helper for robust asset resolution across localhost, Vercel, and GitHub Pages
+const getAssetPath = (path) => {
+  if (!path) return '';
+  const rawBase = import.meta.env.BASE_URL || '/';
+  const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  return `${base}${cleanPath}`;
+};
+
 // Helper to get optimized photo base path
 const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
-  return photo.replace(/\.(jpg|jpeg|png|avif|webp)$/i, '').replace('/photos/', '/Family-Tree/optimized/');
+  const cleanPhoto = photo.replace(/\.(jpg|jpeg|png|avif|webp)$/i, '');
+  if (cleanPhoto.includes('/photos/')) {
+    return getAssetPath(cleanPhoto.replace('/photos/', '/optimized/'));
+  }
+  return getAssetPath(cleanPhoto);
 };
 
 // Helper to normalize names for search matching
@@ -593,28 +606,28 @@ const FamilyTreeApp = () => {
     {
       title: "Original Family Register",
       description: "Original handwritten Bhatt family tree documentation and genealogical records.",
-      image: "/Family-Tree/optimized/source1.jpg",
+      image: getAssetPath('/optimized/source1.jpg'),
       type: "Document",
       date: "1942"
     },
     {
       title: "Ancestral Heritage Archive",
       description: "Historical municipal records, deed registry, and ancestral heritage notes.",
-      image: "/Family-Tree/optimized/source2.jpg",
+      image: getAssetPath('/optimized/source2.jpg'),
       type: "Archive",
       date: "1968"
     },
     {
       title: "Family Portrait Collection",
       description: "Vintage photographs collection capturing generations of the Bhatt family.",
-      image: "/Family-Tree/optimized/source3.jpg",
+      image: getAssetPath('/optimized/source3.jpg'),
       type: "Photograph",
       date: "1975"
     },
     {
       title: "Lineage Certificates",
       description: "Certificates, birth entries, and historical family certificates.",
-      image: "/Family-Tree/optimized/source4.jpg",
+      image: getAssetPath('/optimized/source4.jpg'),
       type: "Certificate",
       date: "1988"
     }
@@ -915,7 +928,17 @@ const FamilyTreeApp = () => {
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
       <header className="main-header">
         <div className="header-left">
-          <img src="/Family-Tree/bhatt-family-logo.png" alt="Bhatt Family" className="brand-logo" />
+          <img 
+            src={getAssetPath('/bhatt-family-logo.png')} 
+            alt="Bhatt Family" 
+            className="brand-logo" 
+            onError={(e) => {
+              if (!e.target.dataset.triedFallback) {
+                e.target.dataset.triedFallback = 'true';
+                e.target.src = '/bhatt-family-logo.png';
+              }
+            }}
+          />
           <div className="brand-title">
             <h1 className="neon-heading">{isMobile ? (isGujarati ? 'ભટ્ટ પરિવાર' : 'Bhatt Lineage') : t('rootsOfFamily')}</h1>
             <span className="members-badge">🌱 {TOTAL_MEMBERS}</span>
