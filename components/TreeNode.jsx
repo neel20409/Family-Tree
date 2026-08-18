@@ -162,6 +162,60 @@ function findPathByName(node, name, path = []) {
 const STEM_HEIGHT = 46; // Fixed vertical height for SVG branch connectors matching top badge offset
 const MIN_ZOOM = 0.08; // Allow zooming out well past 25% to fit large generations on screen
 
+// Compute every expanded node's card re-centering shift and its connector
+// paths to its children in a single bottom-up walk of the *already rendered*
+// DOM, using only real layout geometry (offsetLeft/offsetWidth). A node's
+// card is re-centered over its own children via a CSS transform (see
+// CardWrapper below); a naive per-node measurement can end up reading a
+// child's card position before that child's own transform has committed
+// (child effects run, and schedule their shift update, before the parent's
+// own effect reads the DOM in the same pass). Doing the whole tree in one
+// synchronous pass sidesteps that entirely: a node's shift here is derived
+// purely from its children's *computed* centers, never from re-reading a
+// transform that may or may not have painted yet.
+function computeTreeLayout(rootTreeNodeEl) {
+  const layoutMap = {};
+
+  const walk = (treeNodeEl, path) => {
+    const card = treeNodeEl.querySelector(':scope > .card-wrapper.node-box');
+    if (!card) return 0;
+
+    const childrenWrapper = treeNodeEl.querySelector(':scope > .tree-children-wrapper');
+    const childrenContainer = childrenWrapper?.querySelector(':scope > .children-flex-container');
+    if (!childrenContainer) {
+      // Collapsed or leaf: the tree-node shrinks to exactly fit the card, so
+      // the card's natural (unshifted) center is just half the node's width.
+      return treeNodeEl.offsetWidth / 2;
+    }
+
+    const containerWidth = childrenContainer.offsetWidth;
+    const slots = Array.from(childrenContainer.children);
+
+    const childCenters = slots.map((slot, index) => {
+      const childTreeNodeEl = slot.querySelector(':scope > .tree-node');
+      const localCenter = childTreeNodeEl ? walk(childTreeNodeEl, `${path}.${index}`) : slot.offsetWidth / 2;
+      return slot.offsetLeft + localCenter;
+    });
+
+    const first = childCenters[0];
+    const last = childCenters[childCenters.length - 1];
+    const idealParentX = (first + last) / 2;
+
+    layoutMap[path] = {
+      shift: idealParentX - containerWidth / 2,
+      svgWidth: containerWidth,
+      linePaths: childCenters.map((childCenterX) => ({
+        d: `M ${idealParentX} 0 C ${idealParentX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT - 4}`,
+      })),
+    };
+
+    return idealParentX;
+  };
+
+  walk(rootTreeNodeEl, 'r');
+  return layoutMap;
+}
+
 const getNodeColors = (level) => {
   const colors = [
     { bg: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', border: '#6366f1', badgeBg: '#4f46e5', lineGrad: ['#6366f1', '#39fff6'] },
@@ -225,6 +279,9 @@ const CardWrapper = React.forwardRef(({ children, className, style, onClick, par
 const TreeNode = ({
   node = familyTree,
   level = 0,
+  nodePath = 'r',
+  layoutMap = {},
+  onShapeChange,
   onPhotoClick,
   onMemberSelect,
   expandPath = [],
@@ -238,19 +295,22 @@ const TreeNode = ({
   const t = useTranslation(isGujarati);
   const [isExpanded, setIsExpanded] = useState(level < 2);
   const [imageLoadError, setImageLoadError] = useState(false);
-  
-  const parentCardRef = useRef(null);
-  const childrenContainerRef = useRef(null);
-  const popAudioRef = useRef(null);
 
-  const [linePaths, setLinePaths] = useState([]);
-  const [svgBounds, setSvgBounds] = useState({ width: 0, height: STEM_HEIGHT });
-  const [parentShift, setParentShift] = useState(0);
+  const popAudioRef = useRef(null);
 
   const hasChildren = node.children && node.children.length > 0;
   const childrenCount = node.children ? node.children.length : 0;
   const boxWidth = isMobile ? 175 : 220;
   const nodeGap = isMobile ? 16 : 36;
+
+  // Geometry for this node -- computed once for the whole tree in one
+  // bottom-up pass by FamilyTreeApp (see computeTreeLayout above), not by
+  // this node in isolation. Absent while collapsed, before the first layout
+  // pass has landed, or for leaf nodes (which need no shift/lines at all).
+  const layout = layoutMap[nodePath];
+  const parentShift = layout ? layout.shift : 0;
+  const svgWidth = layout ? layout.svgWidth : 0;
+  const linePaths = layout ? layout.linePaths : [];
 
   // Stepwise Progression & forceExpand / expandPath sync
   useEffect(() => {
@@ -272,94 +332,16 @@ const TreeNode = ({
     }
   }, [level, expandPath, node.name]);
 
-  // Calculate Bezier SVG Curves & Parent Shift to align parent card directly over children cards
-  const calculateBranchPaths = useCallback(() => {
-    if (!childrenContainerRef.current || !isExpanded || childrenCount === 0) {
-      setParentShift(0);
-      return;
-    }
-
-    const container = childrenContainerRef.current;
-    const containerWidth = container.offsetWidth;
-
-    if (containerWidth === 0) return;
-
-    const containerRect = container.getBoundingClientRect();
-    if (containerRect.width === 0) return;
-
-    // A child card carries its own cosmetic `translateX(--parent-shift)` to
-    // re-center it over its own children -- a CSS transform, invisible to
-    // offsetLeft. Reading getBoundingClientRect instead captures the card's
-    // true painted position (transform + ancestor zoom included), then we
-    // divide out the container's current render scale to land back in the
-    // SVG's local, unscaled coordinate space. Without this, any child whose
-    // own card had been re-centered got its incoming line pointed at its
-    // pre-shift slot instead of where it actually renders.
-    const scale = containerRect.width / containerWidth;
-    const childElements = Array.from(container.children);
-
-    const getCenterX = (childEl) => {
-      const card = childEl.querySelector('.node-box') || childEl;
-      const rect = card.getBoundingClientRect();
-      return (rect.left + rect.width / 2 - containerRect.left) / scale;
-    };
-
-    const firstChildCenter = getCenterX(childElements[0]);
-    const lastChildCenter = getCenterX(childElements[childElements.length - 1]);
-
-    const idealParentX = (firstChildCenter + lastChildCenter) / 2;
-    const currentParentX = containerWidth / 2;
-    const shift = idealParentX - currentParentX;
-
-    setParentShift(shift);
-
-    const paths = childElements.map((childEl, index) => {
-      const childCenterX = getCenterX(childEl);
-      const isChildActive = activePath && activePath.includes(node.children[index]?.name);
-
-      const d = `M ${idealParentX} 0 C ${idealParentX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT - 4}`;
-      return {
-        d,
-        isChildActive,
-        key: `${node.name}-${index}`
-      };
-    });
-
-    setSvgBounds({ width: containerWidth, height: STEM_HEIGHT });
-    setLinePaths(paths);
-  }, [isExpanded, childrenCount, node.children, activePath, node.name]);
-
+  // Tell FamilyTreeApp to recompute the whole tree's connector geometry
+  // whenever *this* node's own expanded/collapsed state changes -- whether
+  // that came from a global stepper/search/expand-all, or this node's own
+  // click handler below (the one case no top-level prop sees directly).
+  // This fires once the DOM for the commit that produced this isExpanded
+  // value has already been laid out, so the recompute always sees the tree
+  // in its current, fully-settled shape.
   useEffect(() => {
-    calculateBranchPaths();
-
-    // Children run their own mount effect (and may schedule their own
-    // parentShift update) *before* this effect fires, since effects run
-    // child-first -- but that update lands in a separate, React-batched
-    // re-render this effect doesn't wait for. So the line above can compute
-    // using each child's still-pre-shift position. Recomputing again a
-    // couple of frames later, once that batched re-render has landed,
-    // re-targets the lines at where the children's cards actually settle.
-    let raf2;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(calculateBranchPaths);
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      if (raf2) cancelAnimationFrame(raf2);
-    };
-  }, [calculateBranchPaths]);
-
-  // Use ResizeObserver to auto-update lines whenever children layout dimensions change
-  useEffect(() => {
-    if (!isExpanded || !hasChildren || !childrenContainerRef.current) return;
-
-    const observer = new ResizeObserver(() => {
-      requestAnimationFrame(calculateBranchPaths);
-    });
-
-    observer.observe(childrenContainerRef.current);
-    return () => observer.disconnect();
-  }, [isExpanded, hasChildren, calculateBranchPaths]);
+    onShapeChange?.();
+  }, [isExpanded, onShapeChange]);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -396,7 +378,6 @@ const TreeNode = ({
       transition={{ duration: 0.4, delay: level * 0.08, ease: [0.4, 0, 0.2, 1] }}
     >
       <CardWrapper
-        ref={parentCardRef}
         parentShift={parentShift}
         className={`node-box ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''} ${isHighlighted ? 'highlighted' : ''} ${isInActivePath ? 'active-path' : ''}`}
         onClick={handleClick}
@@ -481,12 +462,23 @@ const TreeNode = ({
             animate={{ opacity: 1, scaleY: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           >
-          {/* SVG Canvas connecting parent bottom to children top */}
+          {/* SVG Canvas connecting parent bottom to children top. Absolutely
+              positioned and out of flow on purpose: its own `width` attribute
+              is itself computed *from* the layout below, so leaving it in
+              normal flow would let that width feed back into how wide
+              tree-children-wrapper's `max-content` sizing measures -- a
+              feedback loop that could skew measurements mid-cascade, when
+              several nodes recompute in the same pass with the SVG still
+              carrying a stale width from before. Taking it out of flow means
+              it can only ever be a visual overlay, never an input to layout. */}
           <svg
             className="lineage-svg-canvas"
-            width={svgBounds.width || "100%"}
+            width={svgWidth || "100%"}
             height={STEM_HEIGHT}
             style={{
+              position: 'absolute',
+              top: '-4px',
+              left: 0,
               overflow: 'visible',
               pointerEvents: 'none',
               zIndex: 3
@@ -510,37 +502,43 @@ const TreeNode = ({
               </filter>
             </defs>
 
-            {linePaths.map((p) => (
-              <g key={p.key}>
-                <path
-                  d={p.d}
-                  fill="none"
-                  stroke="rgba(2, 6, 23, 0.85)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                />
-                <path
-                  d={p.d}
-                  fill="none"
-                  stroke={p.isChildActive ? `url(#grad-active-${level})` : `url(#grad-standard-${level})`}
-                  strokeWidth={p.isChildActive ? "3.5" : "2.5"}
-                  filter={p.isChildActive ? "url(#neon-line-glow)" : "none"}
-                  className={p.isChildActive ? "flowing-lineage-path" : "lineage-path"}
-                  strokeLinecap="round"
-                />
-              </g>
-            ))}
+            {linePaths.map((p, index) => {
+              const isChildActive = activePath && activePath.includes(node.children[index]?.name);
+              return (
+                <g key={`${node.name}-${index}`}>
+                  <path
+                    d={p.d}
+                    fill="none"
+                    stroke="rgba(2, 6, 23, 0.85)"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={p.d}
+                    fill="none"
+                    stroke={isChildActive ? `url(#grad-active-${level})` : `url(#grad-standard-${level})`}
+                    strokeWidth={isChildActive ? "3.5" : "2.5"}
+                    filter={isChildActive ? "url(#neon-line-glow)" : "none"}
+                    className={isChildActive ? "flowing-lineage-path" : "lineage-path"}
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            })}
           </svg>
 
           {/* Render Children Nodes Flexbox */}
           <div
             className="children-flex-container"
-            ref={childrenContainerRef}
             style={{
               display: "inline-flex",
               justifyContent: "center",
               alignItems: "flex-start",
               position: "relative",
+              // Occupies the vertical space the now-absolutely-positioned
+              // SVG used to take up in flow, so children still start where
+              // they visually did before.
+              marginTop: `${STEM_HEIGHT - 4}px`,
               gap: `${nodeGap}px`,
               width: "max-content"
             }}
@@ -551,9 +549,12 @@ const TreeNode = ({
                 className="child-slot"
                 style={{ minWidth: boxWidth }}
               >
-                <TreeNode 
+                <TreeNode
                   node={child}
                   level={level + 1}
+                  nodePath={`${nodePath}.${index}`}
+                  layoutMap={layoutMap}
+                  onShapeChange={onShapeChange}
                   onPhotoClick={onPhotoClick}
                   onMemberSelect={onMemberSelect}
                   expandPath={expandPath}
@@ -602,6 +603,11 @@ const FamilyTreeApp = () => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedSourceImage, setEnlargedSourceImage] = useState(null);
 
+  // Whole-tree connector geometry (card shifts + line paths), recomputed in
+  // one bottom-up pass by computeTreeLayout -- see that function for why
+  // this replaced N independent per-node ResizeObservers.
+  const [layoutMap, setLayoutMap] = useState({});
+
   const confettiFired = useRef(false);
   const viewportRef = useRef(null);
   const treeContainerRef = useRef(null);
@@ -611,6 +617,27 @@ const FamilyTreeApp = () => {
   const touchZoomStartRef = useRef(1);
 
   const t = useTranslation(isGujarati);
+
+  // Recompute the whole tree's connector geometry. Passed down to every
+  // TreeNode as onShapeChange, which each one calls whenever *its own*
+  // isExpanded actually changes (see TreeNode above) -- covering every
+  // reshape uniformly (global stepper, search, expand-all, or one node's own
+  // click) without needing to track which top-level state affects the tree
+  // vs. relying on a resize side-effect to notice.
+  const recalcLayout = useCallback(() => {
+    const container = treeContainerRef.current;
+    if (!container) return;
+    const rootTreeNodeEl = container.querySelector(':scope > .tree-node');
+    setLayoutMap(rootTreeNodeEl ? computeTreeLayout(rootTreeNodeEl) : {});
+  }, []);
+
+  // isMobile changes each card's width directly (via the boxWidth passed
+  // into inline style) in the same render pass, unlike isExpanded which goes
+  // through a node's own local state first -- so this doesn't need the
+  // onShapeChange indirection above, just a direct recompute on the flag.
+  useEffect(() => {
+    recalcLayout();
+  }, [recalcLayout, isMobile]);
 
   const sources = [
     {
@@ -1205,6 +1232,8 @@ const FamilyTreeApp = () => {
           }}
         >
           <TreeNode
+            layoutMap={layoutMap}
+            onShapeChange={recalcLayout}
             onPhotoClick={handlePhotoClick}
             onMemberSelect={handleMemberSelect}
             expandPath={expandPath}

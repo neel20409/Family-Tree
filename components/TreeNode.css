@@ -518,9 +518,9 @@ html, body {
    Smooth SVG Lineage Bezier Branch Styling
    ========================================================================== */
 
-.lineage-svg-canvas {
-  margin-top: -4px;
-}
+/* .lineage-svg-canvas is positioned via inline style (see TreeNode.jsx) --
+   absolute and out of flow so it can never feed its own width back into
+   ancestor layout sizing. */
 
 .lineage-path {
   stroke-dasharray: 6 3;
