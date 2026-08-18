@@ -651,10 +651,15 @@ const FamilyTreeApp = () => {
     }
   }, [zoomLevel, isMobile]);
 
+  // Center once on mount only -- intentionally NOT depending on centerCanvas,
+  // whose identity changes on every zoomLevel update; depending on it here
+  // would re-schedule this timer on every zoom and snap the view back to
+  // the initial zoom level, fighting the user's own zoom in/out.
   useEffect(() => {
     const timer = setTimeout(centerCanvas, 150);
     return () => clearTimeout(timer);
-  }, [centerCanvas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-play Stepwise Lineage Tour
   useEffect(() => {
