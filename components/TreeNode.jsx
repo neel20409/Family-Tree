@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import './TreeNode.css';
@@ -557,7 +557,7 @@ const FamilyTreeApp = () => {
   
   // Mobile Responsiveness States
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchBarOpen, setSearchBarOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedMemberLevel, setSelectedMemberLevel] = useState(0);
 
@@ -836,7 +836,7 @@ const FamilyTreeApp = () => {
       const targetName = path[path.length - 1];
       setHighlightName(targetName);
       setActivePath(path);
-      setMobileSearchOpen(false);
+      setSearchBarOpen(false);
 
       const targetGenDepth = path.length;
       if (visibleGenLevel < targetGenDepth) {
@@ -896,6 +896,12 @@ const FamilyTreeApp = () => {
   };
 
   return (
+    // reducedMotion="user" makes every motion.div/AnimatePresence transition
+    // here respect the OS "reduce motion" accessibility setting -- without
+    // it, a user with that setting on would see content that starts at
+    // opacity:0 (our `initial` props) and never animates to visible, since
+    // the animation itself is what's supposed to reveal it.
+    <MotionConfig reducedMotion="user">
     <div className="app-container">
       {/* Subtle Static Clean Backdrop Gradient */}
       <div className="bg-clean-gradient" />
@@ -909,29 +915,6 @@ const FamilyTreeApp = () => {
           </div>
         </div>
 
-        {/* Desktop Search Bar */}
-        {!isMobile && (
-          <div className="header-search">
-            <form onSubmit={handleSearch} className="search-form">
-              <div className="search-input-wrapper">
-                <span className="search-icon">🔍</span>
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button type="button" className="clear-search-btn" onClick={handleClearSearch}>
-                    ✕
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        )}
-
         {/* Right Toolbar Icon Actions */}
         <div className="header-actions">
           {/* Source Docs Button */}
@@ -944,17 +927,15 @@ const FamilyTreeApp = () => {
             {isMobile && <span className="btn-label">{t('docsShort')}</span>}
           </button>
 
-          {/* Mobile Search Icon */}
-          {isMobile && (
-            <button
-              className="action-btn mobile-labeled"
-              onClick={() => setMobileSearchOpen(true)}
-              title="Search"
-            >
-              <span className="btn-icon">🔍</span>
-              <span className="btn-label">{t('searchShort')}</span>
-            </button>
-          )}
+          {/* Search Toggle -- opens a thin search bar under the header, on both mobile and desktop */}
+          <button
+            className={`action-btn ${searchBarOpen ? 'active-tour' : ''} ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
+            onClick={() => setSearchBarOpen(v => !v)}
+            title={t('searchShort')}
+          >
+            <span className="btn-icon">🔍</span>
+            {isMobile && <span className="btn-label">{t('searchShort')}</span>}
+          </button>
 
           {/* Language Toggle */}
           <button
@@ -977,6 +958,46 @@ const FamilyTreeApp = () => {
           </button>
         </div>
       </header>
+
+      {/* --- Thin Search Flyout: separate pill, appears only when the search icon is tapped --- */}
+      <AnimatePresence>
+        {searchBarOpen && (
+          <motion.div
+            className="search-flyout card-glass"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+          >
+            <form onSubmit={handleSearch} className="search-form">
+              <div className="search-input-wrapper">
+                <span className="search-icon">🔍</span>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder={t('searchPlaceholder')}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  autoFocus
+                />
+                {searchTerm && (
+                  <button type="button" className="clear-search-btn" onClick={handleClearSearch} aria-label="Clear">
+                    ✕
+                  </button>
+                )}
+              </div>
+            </form>
+            <button
+              type="button"
+              className="search-flyout-close"
+              onClick={() => setSearchBarOpen(false)}
+              aria-label="Close search"
+            >
+              &times;
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- Ultra-Minimalist Floating Bottom Controls Dock (Single Line Pill) --- */}
       <div className="controls-dock">
@@ -1055,49 +1076,6 @@ const FamilyTreeApp = () => {
           </div>
         )}
       </div>
-
-      {/* --- Mobile Full-Screen Search Modal --- */}
-      <AnimatePresence>
-        {isMobile && mobileSearchOpen && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setMobileSearchOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="mobile-search-modal card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            >
-              <div className="mobile-search-header">
-                <h3>🔍 Search Family Member</h3>
-                <button className="modal-close" onClick={() => setMobileSearchOpen(false)}>&times;</button>
-              </div>
-              <form onSubmit={handleSearch} className="search-form">
-                <div className="search-input-wrapper">
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder={t('searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    autoFocus
-                  />
-                  <button type="submit" className="action-btn search-submit-btn">
-                    Search
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* --- Mobile Member Bottom Sheet Drawer --- */}
       <AnimatePresence>
@@ -1306,6 +1284,7 @@ const FamilyTreeApp = () => {
         )}
       </AnimatePresence>
     </div>
+    </MotionConfig>
   );
 };
 
