@@ -348,11 +348,12 @@ html, body {
   align-items: center;
   cursor: pointer;
   backdrop-filter: blur(14px);
+  transform: translateX(var(--parent-shift, 0px));
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .node-box:hover {
-  transform: translateY(-4px);
+  transform: translateX(var(--parent-shift, 0px)) translateY(-4px);
   box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.65), 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
@@ -734,6 +735,11 @@ html, body {
   max-width: 1000px;
   max-height: 85vh;
   overflow-y: auto;
+  /* html/body set touch-action:none globally so the custom pinch/pan canvas
+     gestures work; without opting back in here, that also blocks native
+     touch-drag scrolling inside this modal on mobile, even with
+     overflow-y:auto, since touch-action isn't governed by overflow. */
+  touch-action: pan-y;
   padding: 24px;
 }
 

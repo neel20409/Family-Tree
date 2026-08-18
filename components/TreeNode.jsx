@@ -202,8 +202,14 @@ const CardWrapper = React.forwardRef(({ children, className, style, onClick, par
       className={`card-wrapper ${className}`}
       style={{
         ...style,
-        transform: `translateX(${parentShift}px)`,
-        transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.2s ease',
+        // Set the shift as a CSS variable rather than an inline `transform`:
+        // an inline transform would permanently win over the stylesheet's
+        // `.node-box:hover { transform: translateY(-4px) }` rule (inline
+        // style always beats a stylesheet rule for the same property, even
+        // under :hover), silently killing the hover-lift effect. Letting
+        // the stylesheet own `transform` and just feed it this variable
+        // keeps both the shift and the hover lift working together.
+        '--parent-shift': `${parentShift}px`,
       }}
       onClick={onClick}
     >
