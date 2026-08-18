@@ -126,9 +126,9 @@ const useTranslation = (isGujarati) => {
 // Base URL helper for robust asset resolution across localhost, Vercel, and GitHub Pages
 const getAssetPath = (path) => {
   if (!path) return '';
-  const rawBase = import.meta.env.BASE_URL || '/';
-  const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
-  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const rawBase = import.meta.env.BASE_URL || './';
+  const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
   return `${base}${cleanPath}`;
 };
 
@@ -949,20 +949,35 @@ const FamilyTreeApp = () => {
 
       {/* Faded Bhatt Family Crest Watermark -- fixed to viewport, sits behind the tree canvas */}
       <div className="bg-watermark" aria-hidden="true">
-        <img src="/Family-Tree/bhatt-family-logo.png" alt="" />
+        <img 
+          src={getAssetPath('bhatt-family-logo.png')} 
+          alt="" 
+          onError={(e) => {
+            if (!e.target.dataset.triedFallback) {
+              e.target.dataset.triedFallback = '1';
+              e.target.src = '/bhatt-family-logo.png';
+            } else if (e.target.dataset.triedFallback === '1') {
+              e.target.dataset.triedFallback = '2';
+              e.target.src = 'bhatt-family-logo.png';
+            }
+          }}
+        />
       </div>
 
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
       <header className="main-header">
         <div className="header-left">
           <img 
-            src={getAssetPath('/bhatt-family-logo.png')} 
+            src={getAssetPath('bhatt-family-logo.png')} 
             alt="Bhatt Family" 
             className="brand-logo" 
             onError={(e) => {
               if (!e.target.dataset.triedFallback) {
-                e.target.dataset.triedFallback = 'true';
+                e.target.dataset.triedFallback = '1';
                 e.target.src = '/bhatt-family-logo.png';
+              } else if (e.target.dataset.triedFallback === '1') {
+                e.target.dataset.triedFallback = '2';
+                e.target.src = 'bhatt-family-logo.png';
               }
             }}
           />
