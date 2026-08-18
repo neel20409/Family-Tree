@@ -46,6 +46,34 @@ html, body {
   z-index: 0;
 }
 
+/* Faded crest watermark -- fixed to the viewport (not the pannable/zoomable
+   tree-container) so it stays centered and stable regardless of pan/zoom. */
+.bg-watermark {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-watermark img {
+  width: min(46vw, 620px);
+  max-width: 90vw;
+  height: auto;
+  opacity: 0.05;
+  filter: grayscale(1) contrast(1.1);
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .bg-watermark img {
+    width: min(72vw, 420px);
+  }
+}
+
 /* ==========================================================================
    Neat & Tidy Glassmorphic Floating Header
    ========================================================================== */
