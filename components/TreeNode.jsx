@@ -173,6 +173,7 @@ function findPathByName(node, name, path = []) {
 }
 
 const STEM_HEIGHT = 46; // Fixed vertical height for SVG branch connectors matching top badge offset
+const MIN_ZOOM = 0.08; // Allow zooming out well past 25% to fit large generations on screen
 
 const getNodeColors = (level) => {
   const colors = [
@@ -290,25 +291,34 @@ const TreeNode = ({
       setParentShift(0);
       return;
     }
-    
+
     const container = childrenContainerRef.current;
-    const childElements = Array.from(container.children);
     const containerWidth = container.offsetWidth;
 
     if (containerWidth === 0) return;
 
-    const firstChildCard = childElements[0].querySelector('.node-box');
-    const lastChildCard = childElements[childElements.length - 1].querySelector('.node-box');
+    const containerRect = container.getBoundingClientRect();
+    if (containerRect.width === 0) return;
 
-    let firstChildCenter = childElements[0].offsetLeft + childElements[0].offsetWidth / 2;
-    let lastChildCenter = childElements[childElements.length - 1].offsetLeft + childElements[childElements.length - 1].offsetWidth / 2;
+    // A child card carries its own cosmetic `translateX(--parent-shift)` to
+    // re-center it over its own children -- a CSS transform, invisible to
+    // offsetLeft. Reading getBoundingClientRect instead captures the card's
+    // true painted position (transform + ancestor zoom included), then we
+    // divide out the container's current render scale to land back in the
+    // SVG's local, unscaled coordinate space. Without this, any child whose
+    // own card had been re-centered got its incoming line pointed at its
+    // pre-shift slot instead of where it actually renders.
+    const scale = containerRect.width / containerWidth;
+    const childElements = Array.from(container.children);
 
-    if (firstChildCard) {
-      firstChildCenter = childElements[0].offsetLeft + firstChildCard.offsetLeft + firstChildCard.offsetWidth / 2;
-    }
-    if (lastChildCard) {
-      lastChildCenter = childElements[childElements.length - 1].offsetLeft + lastChildCard.offsetLeft + lastChildCard.offsetWidth / 2;
-    }
+    const getCenterX = (childEl) => {
+      const card = childEl.querySelector('.node-box') || childEl;
+      const rect = card.getBoundingClientRect();
+      return (rect.left + rect.width / 2 - containerRect.left) / scale;
+    };
+
+    const firstChildCenter = getCenterX(childElements[0]);
+    const lastChildCenter = getCenterX(childElements[childElements.length - 1]);
 
     const idealParentX = (firstChildCenter + lastChildCenter) / 2;
     const currentParentX = containerWidth / 2;
@@ -317,13 +327,9 @@ const TreeNode = ({
     setParentShift(shift);
 
     const paths = childElements.map((childEl, index) => {
-      const childCard = childEl.querySelector('.node-box');
-      let childCenterX = childEl.offsetLeft + childEl.offsetWidth / 2;
-      if (childCard) {
-        childCenterX = childEl.offsetLeft + childCard.offsetLeft + childCard.offsetWidth / 2;
-      }
+      const childCenterX = getCenterX(childEl);
       const isChildActive = activePath && activePath.includes(node.children[index]?.name);
-      
+
       const d = `M ${idealParentX} 0 C ${idealParentX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT * 0.45}, ${childCenterX} ${STEM_HEIGHT - 4}`;
       return {
         d,
@@ -338,6 +344,22 @@ const TreeNode = ({
 
   useEffect(() => {
     calculateBranchPaths();
+
+    // Children run their own mount effect (and may schedule their own
+    // parentShift update) *before* this effect fires, since effects run
+    // child-first -- but that update lands in a separate, React-batched
+    // re-render this effect doesn't wait for. So the line above can compute
+    // using each child's still-pre-shift position. Recomputing again a
+    // couple of frames later, once that batched re-render has landed,
+    // re-targets the lines at where the children's cards actually settle.
+    let raf2;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(calculateBranchPaths);
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
   }, [calculateBranchPaths]);
 
   // Use ResizeObserver to auto-update lines whenever children layout dimensions change
@@ -799,7 +821,7 @@ const FamilyTreeApp = () => {
   const handleWheel = (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
-    const newZoom = Math.min(Math.max(zoomLevel * zoomFactor, 0.25), 2.2);
+    const newZoom = Math.min(Math.max(zoomLevel * zoomFactor, MIN_ZOOM), 2.2);
 
     if (viewportRef.current) {
       const rect = viewportRef.current.getBoundingClientRect();
@@ -831,7 +853,7 @@ const FamilyTreeApp = () => {
     if (e.touches.length === 2 && touchDistanceRef.current !== null) {
       const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
       const scale = (currentDist / touchDistanceRef.current) * touchZoomStartRef.current;
-      const newZoom = Math.min(Math.max(scale, 0.25), 2.2);
+      const newZoom = Math.min(Math.max(scale, MIN_ZOOM), 2.2);
       setZoomLevel(newZoom);
     }
   };
@@ -899,7 +921,7 @@ const FamilyTreeApp = () => {
   };
 
   const handleZoomChange = (delta) => {
-    setZoomLevel(prev => Math.min(Math.max(prev + delta, 0.25), 2.2));
+    setZoomLevel(prev => Math.min(Math.max(prev + delta, MIN_ZOOM), 2.2));
   };
 
   const toggleFullscreen = () => {
@@ -924,6 +946,11 @@ const FamilyTreeApp = () => {
     <div className="app-container">
       {/* Subtle Static Clean Backdrop Gradient */}
       <div className="bg-clean-gradient" />
+
+      {/* Faded Bhatt Family Crest Watermark -- fixed to viewport, sits behind the tree canvas */}
+      <div className="bg-watermark" aria-hidden="true">
+        <img src="/Family-Tree/bhatt-family-logo.png" alt="" />
+      </div>
 
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
       <header className="main-header">
