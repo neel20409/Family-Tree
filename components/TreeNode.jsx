@@ -34,7 +34,19 @@ const translations = {
     rootOnly: "Root Only",
     focusMember: "Focus Member",
     memberDetails: "Member Details",
-    close: "Close"
+    close: "Close",
+    docsShort: "Docs",
+    searchShort: "Search",
+    langShort: "Lang",
+    fullShort: "Full",
+    exitFullShort: "Exit",
+    prevShort: "Prev",
+    nextShort: "Next",
+    allShort: "All",
+    tourShort: "Tour",
+    pauseShort: "Pause",
+    resetShort: "Reset",
+    genShort: "Gen"
   },
   gu: {
     searchPlaceholder: "પરિવારના સભ્યને શોધો...",
@@ -64,7 +76,19 @@ const translations = {
     rootOnly: "માત્ર મૂળ",
     focusMember: "કેન્દ્રિત કરો",
     memberDetails: "સભ્ય વિગતો",
-    close: "બંધ કરો"
+    close: "બંધ કરો",
+    docsShort: "દસ્તાવેજ",
+    searchShort: "શોધો",
+    langShort: "ભાષા",
+    fullShort: "ફુલ",
+    exitFullShort: "બહાર",
+    prevShort: "પાછળ",
+    nextShort: "આગળ",
+    allShort: "બધું",
+    tourShort: "ટૂર",
+    pauseShort: "થોભો",
+    resetShort: "રિસેટ",
+    genShort: "પીઢી"
   }
 };
 
@@ -912,40 +936,44 @@ const FamilyTreeApp = () => {
         <div className="header-actions">
           {/* Source Docs Button */}
           <button
-            className="action-btn source-btn icon-only"
+            className={`action-btn source-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
             onClick={() => setSourceModalOpen(true)}
             title={t('source')}
           >
-            📜
+            <span className="btn-icon">📜</span>
+            {isMobile && <span className="btn-label">{t('docsShort')}</span>}
           </button>
 
           {/* Mobile Search Icon */}
           {isMobile && (
-            <button 
-              className="action-btn icon-only" 
+            <button
+              className="action-btn mobile-labeled"
               onClick={() => setMobileSearchOpen(true)}
               title="Search"
             >
-              🔍
+              <span className="btn-icon">🔍</span>
+              <span className="btn-label">{t('searchShort')}</span>
             </button>
           )}
 
           {/* Language Toggle */}
-          <button 
-            className="action-btn lang-btn icon-only" 
+          <button
+            className={`action-btn lang-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
             onClick={() => setIsGujarati(v => !v)}
             title="Toggle Language"
           >
-            {isGujarati ? '🇮🇳' : '🇬🇧'}
+            <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
+            {isMobile && <span className="btn-label">{t('langShort')}</span>}
           </button>
 
           {/* Fullscreen Button */}
-          <button 
-            className="action-btn fullscreen-btn icon-only"
+          <button
+            className={`action-btn fullscreen-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
             onClick={toggleFullscreen}
             title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}
           >
-            {isFullScreen ? '↙️' : '⛶'}
+            <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
+            {isMobile && <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>}
           </button>
         </div>
       </header>
@@ -954,30 +982,35 @@ const FamilyTreeApp = () => {
       <div className="controls-dock">
         {isMobile ? (
           <div className="mobile-dock-row">
-            <button className="dock-btn mobile-dock-btn icon-only" onClick={handlePrevGen} title={t('prevGen')}>
-              ◀
+            <button className="dock-btn mobile-labeled" onClick={handlePrevGen} title={t('prevGen')}>
+              <span className="btn-icon">◀</span>
+              <span className="btn-label">{t('prevShort')}</span>
             </button>
 
             <span className="step-badge" title="Current Generation Level">
-              {visibleGenLevel - 1}/{MAX_TREE_DEPTH}
+              {t('genShort')} {visibleGenLevel - 1}/{MAX_TREE_DEPTH}
             </span>
 
-            <button className="dock-btn mobile-dock-btn icon-only" onClick={handleNextGen} title={t('nextGen')}>
-              ▶
+            <button className="dock-btn mobile-labeled" onClick={handleNextGen} title={t('nextGen')}>
+              <span className="btn-icon">▶</span>
+              <span className="btn-label">{t('nextShort')}</span>
             </button>
 
             <div className="dock-divider" />
 
-            <button className="dock-btn mobile-dock-btn" onClick={centerCanvas} title={t('resetZoom')}>
-              🎯 {Math.round(zoomLevel * 100)}%
+            <button className="dock-btn mobile-labeled" onClick={centerCanvas} title={t('resetZoom')}>
+              <span className="btn-icon">🎯 {Math.round(zoomLevel * 100)}%</span>
+              <span className="btn-label">{t('resetShort')}</span>
             </button>
 
-            <button className="dock-btn mobile-dock-btn icon-only" onClick={handleShowAll} title={t('expandAll')}>
-              ⏩
+            <button className="dock-btn mobile-labeled" onClick={handleShowAll} title={t('expandAll')}>
+              <span className="btn-icon">⏩</span>
+              <span className="btn-label">{t('allShort')}</span>
             </button>
 
-            <button className={`dock-btn mobile-dock-btn icon-only ${isPlayingTour ? 'active-tour' : ''}`} onClick={toggleTour} title={isPlayingTour ? t('pauseTour') : t('playTour')}>
-              {isPlayingTour ? '⏸️' : '▶'}
+            <button className={`dock-btn mobile-labeled ${isPlayingTour ? 'active-tour' : ''}`} onClick={toggleTour} title={isPlayingTour ? t('pauseTour') : t('playTour')}>
+              <span className="btn-icon">{isPlayingTour ? '⏸️' : '▶'}</span>
+              <span className="btn-label">{isPlayingTour ? t('pauseShort') : t('tourShort')}</span>
             </button>
           </div>
         ) : (

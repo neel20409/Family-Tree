@@ -51,6 +51,7 @@ html, body {
    ========================================================================== */
 
 .main-header {
+  box-sizing: border-box;
   position: fixed;
   top: 16px;
   left: 50%;
@@ -212,6 +213,7 @@ html, body {
    ========================================================================== */
 
 .controls-dock {
+  box-sizing: border-box;
   position: fixed;
   bottom: 20px;
   left: 50%;
@@ -757,22 +759,22 @@ html, body {
   }
 
   .main-header {
-    height: 46px;
-    padding: 0 12px;
+    height: 58px;
+    padding: 0 10px;
     top: 8px;
     width: calc(100% - 16px);
     border-radius: 23px;
-    gap: 6px;
+    gap: 4px;
   }
-  
+
   .neon-heading {
-    font-size: 0.98rem;
+    font-size: 0.86rem;
     white-space: nowrap;
   }
 
   .members-badge {
-    font-size: 0.65rem;
-    padding: 2px 6px;
+    font-size: 0.6rem;
+    padding: 2px 5px;
   }
 
   .header-actions {
@@ -787,12 +789,58 @@ html, body {
     padding: 0;
   }
 
+  /* Icon + text-label stacked buttons -- on mobile there's no hover, so the
+     title="" tooltip that explains icon-only buttons on desktop never shows.
+     These make every control legible without needing to guess an emoji. */
+  .action-btn.mobile-labeled {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+    min-width: 38px;
+    height: 44px;
+    padding: 4px 5px;
+    border-radius: 14px;
+    gap: 1px;
+  }
+
+  .dock-btn.mobile-labeled {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+    min-width: 36px;
+    height: 38px;
+    padding: 3px 6px;
+    border-radius: 13px;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-icon {
+    font-size: 0.78rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .btn-label {
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1;
+    color: #fff;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
   .controls-dock {
     position: fixed;
     bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
-    height: 44px;
+    height: 54px;
     z-index: 100;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
@@ -801,44 +849,26 @@ html, body {
     box-shadow: var(--glass-shadow);
     display: flex;
     align-items: center;
-    padding: 0 10px;
-    gap: 6px;
-    max-width: calc(100vw - 20px);
+    padding: 0 8px;
+    gap: 5px;
+    max-width: calc(100vw - 16px);
     width: auto;
   }
 
   .mobile-dock-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-  }
-
-  .dock-btn.mobile-dock-btn {
-    height: 32px;
-    padding: 0 8px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-size: 0.78rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .dock-btn.mobile-dock-btn.icon-only {
-    width: 32px;
-    padding: 0;
-    justify-content: center;
-    border-radius: 50%;
+    gap: 5px;
   }
 
   .step-badge {
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 3px 7px;
     border-radius: 12px;
     background: rgba(57, 255, 246, 0.15);
     color: var(--neon-cyan);
+    white-space: nowrap;
   }
 
   .node-box {
