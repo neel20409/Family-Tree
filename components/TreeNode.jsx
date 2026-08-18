@@ -548,7 +548,7 @@ const TreeNode = ({
             {node.children.map((child, index) => (
               <div
                 key={`${child.name}-${index}`}
-                className="flex flex-col items-center relative"
+                className="child-slot"
                 style={{ minWidth: boxWidth }}
               >
                 <TreeNode 
@@ -582,6 +582,7 @@ const FamilyTreeApp = () => {
   const [expandPath, setExpandPath] = useState([]);
   const [highlightName, setHighlightName] = useState('');
   const [activePath, setActivePath] = useState([]);
+  const [searchNotFound, setSearchNotFound] = useState(false);
   
   // Mobile Responsiveness States
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -856,6 +857,7 @@ const FamilyTreeApp = () => {
       setExpandPath([]);
       setHighlightName('');
       setActivePath([]);
+      setSearchNotFound(false);
       return;
     }
     const path = findPathByName(familyTree, searchTerm.trim());
@@ -864,6 +866,7 @@ const FamilyTreeApp = () => {
       const targetName = path[path.length - 1];
       setHighlightName(targetName);
       setActivePath(path);
+      setSearchNotFound(false);
       setSearchBarOpen(false);
 
       const targetGenDepth = path.length;
@@ -896,7 +899,7 @@ const FamilyTreeApp = () => {
       setExpandPath([]);
       setHighlightName('');
       setActivePath([]);
-      alert(t('nameNotFound'));
+      setSearchNotFound(true);
     }
   };
 
@@ -905,6 +908,7 @@ const FamilyTreeApp = () => {
     setExpandPath([]);
     setHighlightName('');
     setActivePath([]);
+    setSearchNotFound(false);
   };
 
   const handleZoomChange = (delta) => {
@@ -1011,7 +1015,10 @@ const FamilyTreeApp = () => {
                   className="search-input"
                   placeholder={t('searchPlaceholder')}
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={e => {
+                    setSearchTerm(e.target.value);
+                    setSearchNotFound(false);
+                  }}
                   autoFocus
                 />
                 {searchTerm && (
@@ -1020,6 +1027,9 @@ const FamilyTreeApp = () => {
                   </button>
                 )}
               </div>
+              {searchNotFound && (
+                <span className="search-not-found">{t('nameNotFound')}</span>
+              )}
             </form>
             <button
               type="button"
