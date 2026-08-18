@@ -76,20 +76,20 @@ html, body {
 .header-left {
   display: flex;
   align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  height: 42px;
+  width: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(57, 255, 246, 0.15));
 }
 
 .brand-title {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.brand-logo {
-  height: 38px;
-  width: auto;
-  object-fit: contain;
-  border-radius: 8px;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
 .neon-heading {
@@ -806,6 +806,14 @@ html, body {
     width: calc(100% - 16px);
     border-radius: 23px;
     gap: 4px;
+  }
+
+  .header-left {
+    gap: 6px;
+  }
+
+  .brand-logo {
+    height: 30px;
   }
 
   .search-flyout {
