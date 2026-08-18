@@ -102,7 +102,7 @@ const useTranslation = (isGujarati) => {
 // Helper to get optimized photo base path
 const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
-  return photo.replace(/\.(jpg|jpeg|png)$/i, '').replace('/photos/', '/Family-Tree/optimized/');
+  return photo.replace(/\.(jpg|jpeg|png|avif|webp)$/i, '').replace('/photos/', '/Family-Tree/optimized/');
 };
 
 // Helper to normalize names for search matching
