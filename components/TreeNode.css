@@ -676,6 +676,13 @@ html, body {
   min-width: 0;
 }
 
+.search-not-found {
+  display: block;
+  margin: 6px 4px 2px;
+  font-size: 0.78rem;
+  color: #fca5a5;
+}
+
 .search-flyout .search-input-wrapper {
   max-width: none;
 }
