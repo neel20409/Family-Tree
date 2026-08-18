@@ -126,18 +126,40 @@ const useTranslation = (isGujarati) => {
 // Base URL helper for robust asset resolution across localhost, Vercel, and GitHub Pages
 const getAssetPath = (path) => {
   if (!path) return '';
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  const rawBase = import.meta.env.BASE_URL || './';
-  const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
-  return `${base}${cleanPath}`;
+  const clean = path.replace(/^\/+/, '');
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isFamilyTreeSubpath = pathname.startsWith('/Family-Tree') || (import.meta.env.BASE_URL && import.meta.env.BASE_URL.includes('Family-Tree'));
+  const base = isFamilyTreeSubpath ? '/Family-Tree/' : '/';
+  return `${base}${clean}`;
+};
+
+// Resilient image error handler with multi-level path fallback
+const handleImageError = (e, filename) => {
+  if (!e.target || !filename) return;
+  const clean = filename.replace(/^\/+/, '').replace(/^Family-Tree\//, '');
+  const step = parseInt(e.target.dataset.fallbackStep || '0', 10);
+  
+  if (step === 0) {
+    e.target.dataset.fallbackStep = '1';
+    e.target.src = `/Family-Tree/${clean}`;
+  } else if (step === 1) {
+    e.target.dataset.fallbackStep = '2';
+    e.target.src = `/${clean}`;
+  } else if (step === 2) {
+    e.target.dataset.fallbackStep = '3';
+    e.target.src = `./${clean}`;
+  } else if (step === 3) {
+    e.target.dataset.fallbackStep = '4';
+    e.target.src = `${clean}`;
+  }
 };
 
 // Helper to get optimized photo base path
 const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
   const cleanPhoto = photo.replace(/\.(jpg|jpeg|png|avif|webp)$/i, '');
-  if (cleanPhoto.includes('/photos/')) {
-    return getAssetPath(cleanPhoto.replace('/photos/', '/optimized/'));
+  if (cleanPhoto.includes('photos/')) {
+    return getAssetPath(cleanPhoto.replace(/.*photos\//, 'optimized/'));
   }
   return getAssetPath(cleanPhoto);
 };
@@ -628,28 +650,32 @@ const FamilyTreeApp = () => {
     {
       title: "Original Family Register",
       description: "Original handwritten Bhatt family tree documentation and genealogical records.",
-      image: getAssetPath('/optimized/source1.jpg'),
+      image: getAssetPath('optimized/source1.jpg'),
+      rawPath: 'optimized/source1.jpg',
       type: "Document",
       date: "1942"
     },
     {
       title: "Ancestral Heritage Archive",
       description: "Historical municipal records, deed registry, and ancestral heritage notes.",
-      image: getAssetPath('/optimized/source2.jpg'),
+      image: getAssetPath('optimized/source2.jpg'),
+      rawPath: 'optimized/source2.jpg',
       type: "Archive",
       date: "1968"
     },
     {
       title: "Family Portrait Collection",
       description: "Vintage photographs collection capturing generations of the Bhatt family.",
-      image: getAssetPath('/optimized/source3.jpg'),
+      image: getAssetPath('optimized/source3.jpg'),
+      rawPath: 'optimized/source3.jpg',
       type: "Photograph",
       date: "1975"
     },
     {
       title: "Lineage Certificates",
       description: "Certificates, birth entries, and historical family certificates.",
-      image: getAssetPath('/optimized/source4.jpg'),
+      image: getAssetPath('optimized/source4.jpg'),
+      rawPath: 'optimized/source4.jpg',
       type: "Certificate",
       date: "1988"
     }
@@ -1315,7 +1341,12 @@ const FamilyTreeApp = () => {
                     <h3 className="source-title">{src.title}</h3>
                     <p className="source-desc">{src.description}</p>
                     <div className="source-thumbnail-container" onClick={() => setEnlargedSourceImage(src.image)}>
-                      <img src={src.image} alt={src.title} className="source-thumbnail" />
+                      <img 
+                        src={src.image} 
+                        alt={src.title} 
+                        className="source-thumbnail" 
+                        onError={(e) => handleImageError(e, src.rawPath || src.image)}
+                      />
                       <div className="source-hover-overlay">
                         <span>🔍 {t('view')}</span>
                       </div>
@@ -1349,7 +1380,12 @@ const FamilyTreeApp = () => {
             >
               <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
               <div className="modal-body">
-                <img src={enlargedSourceImage} alt="Enlarged Document" className="enlarged-image" />
+                <img 
+                  src={enlargedSourceImage} 
+                  alt="Enlarged Document" 
+                  className="enlarged-image" 
+                  onError={(e) => handleImageError(e, enlargedSourceImage)}
+                />
               </div>
             </motion.div>
           </motion.div>
