@@ -9,7 +9,7 @@ const translations = {
   en: {
     searchPlaceholder: "Search family member...",
     source: "Source Docs",
-    rootsOfFamily: "Roots of Bhatt Family",
+    rootsOfFamily: "Roots of the Bhatt Family",
     born: "Born",
     passed: "Passed",
     sourceDocumentation: "Source Documentation",
@@ -602,6 +602,7 @@ const FamilyTreeApp = () => {
   const [forceExpandAll, setForceExpandAll] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedSourceImage, setEnlargedSourceImage] = useState(null);
+  const [logoModalOpen, setLogoModalOpen] = useState(false);
 
   // Whole-tree connector geometry (card shifts + line paths), recomputed in
   // one bottom-up pass by computeTreeLayout -- see that function for why
@@ -719,14 +720,18 @@ const FamilyTreeApp = () => {
         const rootCenterXRelativeToContainer = ((rootRect.left + rootRect.width / 2) - containerRect.left) / zoomLevel;
         const targetPanX = (vWidth / 2) - rootCenterXRelativeToContainer * initialZoom;
 
-        setPan({ x: targetPanX, y: isMobile ? 65 : 120 });
+        // On mobile the header now has a second tier below it (the icon
+        // flyout, ~110px from the top) -- 65px used to tuck the root card
+        // right under just the header, but that put it behind the flyout
+        // too once that was added. Pushed down to clear both.
+        setPan({ x: targetPanX, y: isMobile ? 130 : 120 });
         setZoomLevel(initialZoom);
         return;
       }
 
       const cWidth = treeContainerRef.current.scrollWidth;
       const initialX = Math.max(10, (vWidth - cWidth) / 2);
-      setPan({ x: initialX, y: isMobile ? 65 : 120 });
+      setPan({ x: initialX, y: isMobile ? 130 : 120 });
       setZoomLevel(initialZoom);
     }
   }, [zoomLevel, isMobile]);
@@ -954,6 +959,25 @@ const FamilyTreeApp = () => {
     }
   };
 
+  // Icon-only everywhere now -- rendered inline in the header on desktop, or
+  // in their own small floating tier below it on mobile (see JSX below).
+  const headerActionButtons = (
+    <>
+      <button className="action-btn icon-only source-btn" onClick={() => setSourceModalOpen(true)} title={t('source')}>
+        <span className="btn-icon">📜</span>
+      </button>
+      <button className={`action-btn icon-only ${searchBarOpen ? 'active-tour' : ''}`} onClick={() => setSearchBarOpen(v => !v)} title={t('searchShort')}>
+        <span className="btn-icon">🔍</span>
+      </button>
+      <button className="action-btn icon-only lang-btn" onClick={() => setIsGujarati(v => !v)} title="Toggle Language">
+        <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
+      </button>
+      <button className="action-btn icon-only fullscreen-btn" onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
+        <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
+      </button>
+    </>
+  );
+
   return (
     // reducedMotion="user" makes every motion.div/AnimatePresence transition
     // here respect the OS "reduce motion" accessibility setting -- without
@@ -973,56 +997,42 @@ const FamilyTreeApp = () => {
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
       <header className="main-header">
         <div className="header-left">
-          <img src="/Family-Tree/bhatt-family-logo.png" alt="Bhatt Family" className="brand-logo" />
+          {/* The crest's tree/script are navy -- illegible directly on the
+              header's dark glass. A light frame behind it gives it the
+              contrast it was actually designed against. */}
+          <div className="brand-logo-frame">
+            <img
+              src="/Family-Tree/bhatt-family-logo.png"
+              alt="Bhatt Family"
+              className="brand-logo"
+              onClick={() => setLogoModalOpen(true)}
+              title="Click to view crest"
+              style={{ cursor: 'pointer' }}
+            />
+          </div>
           <div className="brand-title">
-            <h1 className="neon-heading">{isMobile ? (isGujarati ? 'ભટ્ટ પરિવાર' : 'Bhatt Lineage') : t('rootsOfFamily')}</h1>
+            <h1 className="neon-heading">{isMobile && isGujarati ? 'ભટ્ટ પરિવાર' : t('rootsOfFamily')}</h1>
             <span className="members-badge">🌱 {TOTAL_MEMBERS}</span>
           </div>
         </div>
 
-        {/* Right Toolbar Icon Actions */}
-        <div className="header-actions">
-          {/* Source Docs Button */}
-          <button
-            className={`action-btn source-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
-            onClick={() => setSourceModalOpen(true)}
-            title={t('source')}
-          >
-            <span className="btn-icon">📜</span>
-            {isMobile && <span className="btn-label">{t('docsShort')}</span>}
-          </button>
-
-          {/* Search Toggle -- opens a thin search bar under the header, on both mobile and desktop */}
-          <button
-            className={`action-btn ${searchBarOpen ? 'active-tour' : ''} ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
-            onClick={() => setSearchBarOpen(v => !v)}
-            title={t('searchShort')}
-          >
-            <span className="btn-icon">🔍</span>
-            {isMobile && <span className="btn-label">{t('searchShort')}</span>}
-          </button>
-
-          {/* Language Toggle */}
-          <button
-            className={`action-btn lang-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
-            onClick={() => setIsGujarati(v => !v)}
-            title="Toggle Language"
-          >
-            <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
-            {isMobile && <span className="btn-label">{t('langShort')}</span>}
-          </button>
-
-          {/* Fullscreen Button */}
-          <button
-            className={`action-btn fullscreen-btn ${isMobile ? 'mobile-labeled' : 'icon-only'}`}
-            onClick={toggleFullscreen}
-            title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}
-          >
-            <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
-            {isMobile && <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>}
-          </button>
-        </div>
+        {/* Right Toolbar Icon Actions -- on mobile these move to their own
+            floating tier below the header (see header-actions-flyout)
+            instead, so the title above never has to compete with them for
+            width and can always render in full. */}
+        {!isMobile && (
+          <div className="header-actions">
+            {headerActionButtons}
+          </div>
+        )}
       </header>
+
+      {/* --- Mobile-only Second Tier: small icon-only actions floating below the header --- */}
+      {isMobile && (
+        <div className="header-actions-flyout card-glass">
+          {headerActionButtons}
+        </div>
+      )}
 
       {/* --- Thin Search Flyout: separate pill, appears only when the search icon is tapped --- */}
       <AnimatePresence>
@@ -1147,6 +1157,11 @@ const FamilyTreeApp = () => {
           </div>
         )}
       </div>
+
+      {/* --- Credit Footer: tucked below the controls dock, deliberately quiet --- */}
+      <footer className="credit-footer">
+        Preserved by Ramanlal Bhatt · Created by Neel Bhatt
+      </footer>
 
       {/* --- Mobile Member Bottom Sheet Drawer --- */}
       <AnimatePresence>
@@ -1351,6 +1366,39 @@ const FamilyTreeApp = () => {
               <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
               <div className="modal-body">
                 <img src={enlargedSourceImage} alt="Enlarged Document" className="enlarged-image" />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Crest Logo Lightbox -- shows the raw, unfiltered logo (no drop-shadow, no watermark fade) --- */}
+      <AnimatePresence>
+        {logoModalOpen && (
+          <motion.div
+            className="modal-overlay"
+            onClick={() => setLogoModalOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="modal-content card-glass"
+              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            >
+              <button className="modal-close" onClick={() => setLogoModalOpen(false)} aria-label="Close">&times;</button>
+              <div className="modal-body">
+                {/* Same light-backdrop reasoning as the header: the crest's
+                    navy ink needs a light ground to read against, and the
+                    modal's own glass is dark. */}
+                <div className="crest-modal-frame">
+                  <img src="/Family-Tree/bhatt-family-logo.png" alt="Bhatt Family Crest" className="enlarged-image" />
+                </div>
               </div>
             </motion.div>
           </motion.div>
