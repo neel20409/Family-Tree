@@ -63,8 +63,11 @@ html, body {
   width: min(46vw, 620px);
   max-width: 90vw;
   height: auto;
-  opacity: 0.05;
-  filter: grayscale(1) contrast(1.1);
+  /* 0.05 was too faint for the crest's fine detail (leaves/branch work) to
+     read at all against the dark background -- bumped just enough to keep
+     that detail visible while still staying a background watermark. */
+  opacity: 0.1;
+  filter: grayscale(1) contrast(1.05) brightness(1.6);
   user-select: none;
 }
 
@@ -105,19 +108,33 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* The previous crest was navy-on-transparent, invisible on this app's dark
+   glass -- every earlier version of this rule was working around that with
+   a colored backdrop. The current crest (public/bhatt-family-logo.png) is
+   gold ink instead, which reads cleanly against dark on its own, so none of
+   that is needed anymore. */
+.brand-logo-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .brand-logo {
-  height: 42px;
+  height: 56px;
   width: auto;
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 6px rgba(57, 255, 246, 0.15));
+  display: block;
 }
 
 .brand-title {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .neon-heading {
@@ -130,6 +147,9 @@ html, body {
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 20px var(--neon-glow);
   letter-spacing: 0.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .members-badge {
@@ -195,6 +215,24 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Mobile-only second tier: the same buttons, floating in their own small
+   pill below the header instead of sharing its row -- so the title above
+   never has to shrink or truncate to make room for them. */
+.header-actions-flyout {
+  box-sizing: border-box;
+  position: fixed;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 98;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 18px;
 }
 
 .action-btn {
@@ -260,6 +298,25 @@ html, body {
   align-items: center;
   padding: 0 12px;
   gap: 6px;
+}
+
+/* Sits in the sliver of space below the controls dock -- deliberately quiet
+   (small, low-opacity, no background) so it doesn't compete with the dock
+   above it, but still there and legible if you look. */
+.credit-footer {
+  position: fixed;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  color: rgba(203, 213, 225, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
 }
 
 .dock-btn {
@@ -772,6 +829,19 @@ html, body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+/* Same reasoning as .brand-logo-frame -- the current gold-ink crest doesn't
+   need a contrast-boosting backdrop, just breathing room. */
+.crest-modal-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.crest-modal-frame .enlarged-image {
+  box-shadow: none;
+}
+
 /* Source Modal Grid */
 .source-modal-content {
   width: 90vw;
@@ -848,11 +918,11 @@ html, body {
   }
 
   .brand-logo {
-    height: 30px;
+    height: 42px;
   }
 
   .search-flyout {
-    top: 74px;
+    top: 124px;
     left: 8px;
     right: 8px;
     width: calc(100% - 16px);
@@ -870,31 +940,13 @@ html, body {
     padding: 2px 5px;
   }
 
-  .header-actions {
-    gap: 4px;
-  }
-
+  /* Small icon-only buttons for the floating second tier (header-actions-flyout) */
   .action-btn.icon-only {
-    width: 32px;
-    height: 32px;
-    font-size: 0.82rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.68rem;
     border-radius: 50%;
     padding: 0;
-  }
-
-  /* Icon + text-label stacked buttons -- on mobile there's no hover, so the
-     title="" tooltip that explains icon-only buttons on desktop never shows.
-     These make every control legible without needing to guess an emoji. */
-  .action-btn.mobile-labeled {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: auto;
-    min-width: 38px;
-    height: 44px;
-    padding: 4px 5px;
-    border-radius: 14px;
-    gap: 1px;
   }
 
   .dock-btn.mobile-labeled {
@@ -909,6 +961,13 @@ html, body {
     gap: 1px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* The mobile dock sits closer to the screen edge, leaving less room below
+     it -- shrink to fit without touching the dock. */
+  .credit-footer {
+    bottom: 1px;
+    font-size: 0.52rem;
   }
 
   .btn-icon {
