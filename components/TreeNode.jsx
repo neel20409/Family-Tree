@@ -123,6 +123,16 @@ const useTranslation = (isGujarati) => {
   return (key) => translations[isGujarati ? 'gu' : 'en'][key] || key;
 };
 
+// Base URL helper for robust asset resolution across localhost, Vercel, and GitHub Pages
+const getAssetPath = (path) => {
+  if (!path) return '';
+  const clean = path.replace(/^\/+/, '');
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isFamilyTreeSubpath = pathname.startsWith('/Family-Tree') || (import.meta.env.BASE_URL && import.meta.env.BASE_URL.includes('Family-Tree'));
+  const base = isFamilyTreeSubpath ? '/Family-Tree/' : '/';
+  return `${base}${clean}`;
+};
+
 // Helper to get optimized photo base path
 const getOptimizedPhotoBase = (photo) => {
   if (!photo) return '';
@@ -628,6 +638,14 @@ const FamilyTreeApp = () => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedSourceImage, setEnlargedSourceImage] = useState(null);
   const [logoModalOpen, setLogoModalOpen] = useState(false);
+  // The crest PNG can take a while to arrive on a slow connection -- without
+  // this, the <img> sits in the browser's native "pending/broken" placeholder
+  // (an opaque gray box with a broken-image glyph) for that whole time,
+  // ignoring the CSS opacity/filter meant to keep it a subtle watermark.
+  // Staying hidden until onLoad fires means a slow or failed load is just
+  // blank, never that glyph.
+  const [watermarkLoaded, setWatermarkLoaded] = useState(false);
+  const [brandLogoLoaded, setBrandLogoLoaded] = useState(false);
 
   // Whole-tree connector geometry (card shifts + line paths), recomputed in
   // one bottom-up pass by computeTreeLayout -- see that function for why
@@ -1141,7 +1159,21 @@ const FamilyTreeApp = () => {
 
       {/* Faded Bhatt Family Crest Watermark -- fixed to viewport, sits behind the tree canvas */}
       <div className="bg-watermark" aria-hidden="true">
-        <img src="/Family-Tree/bhatt-family-logo.png" alt="" />
+        <img
+          src={getAssetPath('bhatt-family-logo.png')}
+          alt=""
+          className={watermarkLoaded ? 'loaded' : ''}
+          onLoad={() => setWatermarkLoaded(true)}
+          onError={(e) => {
+            if (!e.target.dataset.triedFallback) {
+              e.target.dataset.triedFallback = '1';
+              e.target.src = '/bhatt-family-logo.png';
+            } else if (e.target.dataset.triedFallback === '1') {
+              e.target.dataset.triedFallback = '2';
+              e.target.src = 'bhatt-family-logo.png';
+            }
+          }}
+        />
       </div>
 
       {/* --- Ultra-Minimalist Floating Top Header (Single Line Glass Pill) --- */}
@@ -1152,12 +1184,22 @@ const FamilyTreeApp = () => {
               contrast it was actually designed against. */}
           <div className="brand-logo-frame">
             <img
-              src="/Family-Tree/bhatt-family-logo.png"
+              src={getAssetPath('bhatt-family-logo.png')}
               alt="Bhatt Family"
-              className="brand-logo"
+              className={`brand-logo${brandLogoLoaded ? ' loaded' : ''}`}
               onClick={() => setLogoModalOpen(true)}
+              onLoad={() => setBrandLogoLoaded(true)}
               title="Click to view crest"
               style={{ cursor: 'pointer' }}
+              onError={(e) => {
+                if (!e.target.dataset.triedFallback) {
+                  e.target.dataset.triedFallback = '1';
+                  e.target.src = '/bhatt-family-logo.png';
+                } else if (e.target.dataset.triedFallback === '1') {
+                  e.target.dataset.triedFallback = '2';
+                  e.target.src = 'bhatt-family-logo.png';
+                }
+              }}
             />
           </div>
           <div className="brand-title">
