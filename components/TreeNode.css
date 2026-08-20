@@ -63,12 +63,21 @@ html, body {
   width: min(46vw, 620px);
   max-width: 90vw;
   height: auto;
+  /* Hidden until onLoad fires (see the .loaded class below) -- while the
+     PNG is still downloading on a slow connection, this stays invisible
+     instead of showing the browser's native broken-image placeholder,
+     which ignores this opacity/filter until the image actually decodes. */
+  opacity: 0;
+  filter: grayscale(1) contrast(1.05) brightness(1.6);
+  user-select: none;
+  transition: opacity 0.4s ease;
+}
+
+.bg-watermark img.loaded {
   /* 0.05 was too faint for the crest's fine detail (leaves/branch work) to
      read at all against the dark background -- bumped just enough to keep
      that detail visible while still staying a background watermark. */
   opacity: 0.1;
-  filter: grayscale(1) contrast(1.05) brightness(1.6);
-  user-select: none;
 }
 
 @media (max-width: 768px) {
@@ -128,6 +137,14 @@ html, body {
   height: 56px;
   width: auto;
   display: block;
+  /* Same reasoning as .bg-watermark img -- stay hidden until loaded rather
+     than showing the native broken-image placeholder on a slow connection. */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.brand-logo.loaded {
+  opacity: 1;
 }
 
 .brand-title {

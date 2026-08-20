@@ -663,6 +663,14 @@ const FamilyTreeApp = () => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedSourceImage, setEnlargedSourceImage] = useState(null);
   const [logoModalOpen, setLogoModalOpen] = useState(false);
+  // The crest PNG can take a while to arrive on a slow connection -- without
+  // this, the <img> sits in the browser's native "pending/broken" placeholder
+  // (an opaque gray box with a broken-image glyph) for that whole time,
+  // ignoring the CSS opacity/filter meant to keep it a subtle watermark.
+  // Staying hidden until onLoad fires means a slow or failed load is just
+  // blank, never that glyph.
+  const [watermarkLoaded, setWatermarkLoaded] = useState(false);
+  const [brandLogoLoaded, setBrandLogoLoaded] = useState(false);
 
   // Whole-tree connector geometry (card shifts + line paths), recomputed in
   // one bottom-up pass by computeTreeLayout -- see that function for why
@@ -1180,9 +1188,11 @@ const FamilyTreeApp = () => {
 
       {/* Faded Bhatt Family Crest Watermark -- fixed to viewport, sits behind the tree canvas */}
       <div className="bg-watermark" aria-hidden="true">
-        <img 
-          src={getAssetPath('bhatt-family-logo.png')} 
-          alt="" 
+        <img
+          src={getAssetPath('bhatt-family-logo.png')}
+          alt=""
+          className={watermarkLoaded ? 'loaded' : ''}
+          onLoad={() => setWatermarkLoaded(true)}
           onError={(e) => {
             if (!e.target.dataset.triedFallback) {
               e.target.dataset.triedFallback = '1';
@@ -1202,11 +1212,12 @@ const FamilyTreeApp = () => {
               header's dark glass. A light frame behind it gives it the
               contrast it was actually designed against. */}
           <div className="brand-logo-frame">
-            <img 
-              src={getAssetPath('bhatt-family-logo.png')} 
-              alt="Bhatt Family" 
-              className="brand-logo" 
+            <img
+              src={getAssetPath('bhatt-family-logo.png')}
+              alt="Bhatt Family"
+              className={`brand-logo${brandLogoLoaded ? ' loaded' : ''}`}
               onClick={() => setLogoModalOpen(true)}
+              onLoad={() => setBrandLogoLoaded(true)}
               title="Click to view crest"
               style={{ cursor: 'pointer' }}
               onError={(e) => {
