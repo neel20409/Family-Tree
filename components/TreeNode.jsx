@@ -709,7 +709,12 @@ const FamilyTreeApp = () => {
   // Center Kaduji Bhatt (Root Node) card directly in the screen horizontal center on Reset Canvas
   const centerCanvas = useCallback(() => {
     if (viewportRef.current && treeContainerRef.current) {
-      const rootCard = document.querySelector('.root-node > .card-wrapper > .node-box');
+      // CardWrapper renders "card-wrapper" and "node-box" as classes on the
+      // *same* element, not nested ones -- a `.card-wrapper > .node-box`
+      // descendant combinator here never matched anything, so this always
+      // silently fell through to the cruder scrollWidth-based fallback
+      // below, which is what produced the off-center "reset" position.
+      const rootCard = document.querySelector('.root-node > .card-wrapper.node-box');
       const vWidth = viewportRef.current.clientWidth;
       const initialZoom = isMobile ? 0.75 : 1;
 
@@ -783,13 +788,24 @@ const FamilyTreeApp = () => {
     setIsPlayingTour(false);
     setForceExpandAll(null);
     setVisibleGenLevel(1);
-    centerCanvas();
+    // Deferred, not called inline: collapsing to root-only is a state
+    // update React hasn't rendered yet at this point in the handler, and if
+    // the tree had an asymmetric expanded shape before this click, the root
+    // card can still be carrying the old parent-shift transform when
+    // measured. Waiting lets that settle first, so centering reads the
+    // actual post-collapse position instead of a stale, off-center one.
+    setTimeout(centerCanvas, 260);
   };
 
   const handleShowAll = () => {
     setIsPlayingTour(false);
     setVisibleGenLevel(MAX_TREE_DEPTH + 1);
     setForceExpandAll(true);
+    // Same reasoning as handleRootOnly -- let the full expansion (and its
+    // layout/shift recalculation) settle before centering, so the root card
+    // stays centered instead of drifting toward whichever side the newly
+    // expanded subtree happens to be wider on.
+    setTimeout(centerCanvas, 320);
   };
 
   const toggleTour = () => {
@@ -1100,7 +1116,11 @@ const FamilyTreeApp = () => {
 
             <div className="dock-divider" />
 
-            <button className="dock-btn mobile-labeled" onClick={centerCanvas} title={t('resetZoom')}>
+            {/* Mobile has no separate "Root Only" control, so Reset does
+                both jobs here: recenter the canvas and drop back to
+                generation 1, matching what the desktop dock splits into
+                two buttons. */}
+            <button className="dock-btn mobile-labeled" onClick={handleRootOnly} title={t('resetZoom')}>
               <span className="btn-icon">🎯 {Math.round(zoomLevel * 100)}%</span>
               <span className="btn-label">{t('resetShort')}</span>
             </button>
