@@ -634,6 +634,7 @@ const FamilyTreeApp = () => {
   const [pan, setPan] = useState({ x: 0, y: 100 });
   const [zoomLevel, setZoomLevel] = useState(window.innerWidth <= 768 ? 0.75 : 1);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPinching, setIsPinching] = useState(false);
   const [forceExpandAll, setForceExpandAll] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [enlargedSourceImage, setEnlargedSourceImage] = useState(null);
@@ -987,6 +988,7 @@ const FamilyTreeApp = () => {
     if (e.touches.length === 2) {
       touchDistanceRef.current = getTouchDistance(e.touches[0], e.touches[1]);
       touchZoomStartRef.current = zoomLevel;
+      setIsPinching(true);
     }
   };
 
@@ -995,12 +997,31 @@ const FamilyTreeApp = () => {
       const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
       const scale = (currentDist / touchDistanceRef.current) * touchZoomStartRef.current;
       const newZoom = Math.min(Math.max(scale, MIN_ZOOM), 2.2);
+
+      // Anchor the zoom at the midpoint between the two fingers, same as
+      // handleWheel does for the mouse cursor -- without this the content
+      // only ever zoomed from the canvas's fixed top-left corner, so it
+      // visibly slid out from under your fingers on every pinch instead of
+      // staying put under them. That drift, combined with the CSS
+      // transition fighting each rapid update (see .no-transition below),
+      // is what read as "glitchy."
+      if (viewportRef.current) {
+        const rect = viewportRef.current.getBoundingClientRect();
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+
+        setPan({
+          x: midX - (midX - pan.x) * (newZoom / zoomLevel),
+          y: midY - (midY - pan.y) * (newZoom / zoomLevel)
+        });
+      }
       setZoomLevel(newZoom);
     }
   };
 
   const handleTouchEnd = () => {
     touchDistanceRef.current = null;
+    setIsPinching(false);
   };
 
   // Search Member & Route Canvas Directly to Target Card Center
@@ -1385,7 +1406,14 @@ const FamilyTreeApp = () => {
         onTouchEnd={handleTouchEnd}
       >
         <div
-          className="tree-container"
+          // Live drag/pinch updates fire faster than the transition's own
+          // 0.05s duration, so each new frame interrupted the one before it
+          // instead of ever catching up to the actual finger/pointer
+          // position -- it looked like lag, not smoothness. The transition
+          // is only useful for the *discrete* jumps (reset, expand-all,
+          // search, +/- buttons), so it's suppressed during active gestures
+          // and left on for everything else.
+          className={`tree-container ${(isDragging || isPinching) ? 'no-transition' : ''}`}
           ref={treeContainerRef}
           style={{
             transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoomLevel})`,

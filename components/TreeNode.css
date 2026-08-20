@@ -411,6 +411,11 @@ html, body {
   transition: transform 0.05s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
 
+/* Active drag/pinch: track the pointer/fingers 1:1, no animated catch-up. */
+.tree-container.no-transition {
+  transition: none;
+}
+
 /* ==========================================================================
    Clean Flat 2D Card & Node Styling
    ========================================================================== */
