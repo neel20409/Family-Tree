@@ -251,6 +251,22 @@ function computeTreeLayout(rootTreeNodeEl) {
   return layoutMap;
 }
 
+// Zoom-independent center-X of `card` relative to `container`, using the
+// offsetLeft/offsetParent chain (layout-only) instead of
+// getBoundingClientRect(), which is painted/scaled and gets wildly
+// imprecise when divided by a very small zoomLevel (e.g. right after
+// Expand All, where zoomLevel can be as low as MIN_ZOOM).
+function getLocalCenterX(card, container) {
+  let x = 0;
+  let el = card;
+  while (el && el !== container) {
+    x += el.offsetLeft;
+    el = el.offsetParent;
+  }
+  const shift = parseFloat(getComputedStyle(card).getPropertyValue('--parent-shift')) || 0;
+  return x + shift + card.offsetWidth / 2;
+}
+
 const getNodeColors = (level) => {
   const colors = [
     { bg: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', border: '#6366f1', badgeBg: '#4f46e5', lineGrad: ['#6366f1', '#39fff6'] },
@@ -772,10 +788,13 @@ const FamilyTreeApp = () => {
       const initialZoom = isMobile ? 0.75 : 1;
 
       if (rootCard) {
-        const rootRect = rootCard.getBoundingClientRect();
-        const containerRect = treeContainerRef.current.getBoundingClientRect();
-
-        const rootCenterXRelativeToContainer = ((rootRect.left + rootRect.width / 2) - containerRect.left) / zoomLevel;
+        // Layout-based (offsetLeft/offsetParent chain), not
+        // getBoundingClientRect()/zoomLevel: the painted rect divided by a
+        // very small zoomLevel (e.g. right after Expand All, where it can
+        // be as low as MIN_ZOOM) amplifies any measurement imprecision by
+        // up to ~12x, which is why Reset used to need a second click to
+        // land correctly.
+        const rootCenterXRelativeToContainer = getLocalCenterX(rootCard, treeContainerRef.current);
         const targetPanX = (vWidth / 2) - rootCenterXRelativeToContainer * initialZoom;
 
         // On mobile the header now has a second tier below it (the icon
@@ -792,7 +811,7 @@ const FamilyTreeApp = () => {
       setPan({ x: initialX, y: isMobile ? 130 : 120 });
       setZoomLevel(initialZoom);
     }
-  }, [zoomLevel, isMobile]);
+  }, [isMobile]);
 
   // Zoom out (and center) enough to fit the *entire* expanded tree in view,
   // used by Expand All instead of centerCanvas. centerCanvas always targets
@@ -826,31 +845,43 @@ const FamilyTreeApp = () => {
     const fitZoomY = (vHeight - topMargin - bottomMargin) / treeHeight;
     const targetZoom = Math.min(maxZoom, Math.max(MIN_ZOOM, Math.min(fitZoomX, fitZoomY)));
 
-    const rootRect = rootCard.getBoundingClientRect();
-    const containerRect = treeContainerRef.current.getBoundingClientRect();
-    const rootCenterXRelativeToContainer = ((rootRect.left + rootRect.width / 2) - containerRect.left) / zoomLevel;
+    const rootCenterXRelativeToContainer = getLocalCenterX(rootCard, treeContainerRef.current);
     const targetPanX = (vWidth / 2) - rootCenterXRelativeToContainer * targetZoom;
 
     setPan({ x: targetPanX, y: topMargin });
     setZoomLevel(targetZoom);
-  }, [zoomLevel, isMobile, centerCanvas]);
+  }, [isMobile, centerCanvas]);
 
-  // Polls the tree's rendered width until it stops growing (two consecutive
-  // identical readings), then runs the callback -- more robust than a fixed
-  // delay for a cascade whose size (and therefore settle time) depends on
-  // how much of the tree just got expanded.
+  // Polls until the tree's rendered width AND the root card's own
+  // --parent-shift both stop changing (two consecutive identical
+  // readings), then runs the callback.
+  //
+  // Width alone isn't enough: --parent-shift is a *transform*, computed by
+  // a separate state cycle (layoutMap, driven by each node's onShapeChange
+  // effect) that settles independently of layout. Collapsing straight from
+  // a fully expanded tree, scrollWidth reaches its final value quickly, but
+  // the root card can still be carrying its old, much larger shift from
+  // when it was centered over the whole expanded tree -- centerCanvas
+  // would then measure the root at that stale, still-shifted position and
+  // pan to completely the wrong place. That's why Reset after Expand All
+  // used to need a second click: layoutMap had only caught up by then.
   const waitForTreeToSettle = useCallback((callback) => {
     let lastWidth = -1;
+    let lastShift = null;
     let stableCount = 0;
     let attempts = 0;
     const check = () => {
       const container = treeContainerRef.current;
       if (!container) { callback(); return; }
       const width = container.scrollWidth;
-      stableCount = width === lastWidth ? stableCount + 1 : 0;
+      const rootCard = document.querySelector('.root-node > .card-wrapper.node-box');
+      const shift = rootCard ? getComputedStyle(rootCard).getPropertyValue('--parent-shift') : null;
+      const stable = width === lastWidth && shift === lastShift;
+      stableCount = stable ? stableCount + 1 : 0;
       lastWidth = width;
+      lastShift = shift;
       attempts += 1;
-      if (stableCount >= 2 || attempts >= 20) {
+      if (stableCount >= 2 || attempts >= 25) {
         callback();
         return;
       }
@@ -906,13 +937,16 @@ const FamilyTreeApp = () => {
     setIsPlayingTour(false);
     setForceExpandAll(null);
     setVisibleGenLevel(1);
-    // Deferred, not called inline: collapsing to root-only is a state
-    // update React hasn't rendered yet at this point in the handler, and if
-    // the tree had an asymmetric expanded shape before this click, the root
-    // card can still be carrying the old parent-shift transform when
-    // measured. Waiting lets that settle first, so centering reads the
-    // actual post-collapse position instead of a stale, off-center one.
-    setTimeout(centerCanvas, 260);
+    // Collapsing straight from a fully expanded (73-node) tree back to
+    // root-only is just as big a DOM change as Expand All was, so it needs
+    // the same settle-detection as fitTreeToView, not a fixed delay -- a
+    // fixed delay tuned for collapsing from a small already-expanded state
+    // (a couple of generations) fired too early for a collapse this size,
+    // measuring the root card mid-collapse and landing off-center. That's
+    // why Reset after Expand All used to need a second click: the first
+    // click's centering read a stale position, and the DOM had actually
+    // finished settling by the second click.
+    waitForTreeToSettle(centerCanvas);
   };
 
   const handleShowAll = () => {
