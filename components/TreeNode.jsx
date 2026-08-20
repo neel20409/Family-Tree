@@ -276,7 +276,15 @@ const CardWrapper = React.forwardRef(({ children, className, style, onClick, par
 // --------------------------------------------------------------------------
 // TreeNode Component & Flat 2D SVG Branch Lineage Renderer
 // --------------------------------------------------------------------------
-const TreeNode = ({
+// Memoized because none of this component's props ever change during a
+// pan/zoom gesture (pan/zoom live in FamilyTreeApp and are applied via a
+// transform on the ancestor .tree-container, not passed down here) -- but
+// without memo, every one of the tree's ~73 nodes re-rendered on every
+// single wheel tick or touchmove event anyway, since a parent re-render
+// re-renders all children by default regardless of whether their props
+// changed. That's what produced the multi-second input lag: state updates
+// queuing up faster than React could actually flush all those renders.
+const TreeNode = React.memo(({
   node = familyTree,
   level = 0,
   nodePath = 'r',
@@ -572,7 +580,7 @@ const TreeNode = ({
       )}
     </motion.div>
   );
-};
+});
 
 const FamilyTreeApp = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -682,16 +690,21 @@ const FamilyTreeApp = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handlePhotoClick = (img) => {
+  // useCallback here isn't just tidiness: TreeNode is wrapped in React.memo
+  // (see its definition), and a plain function would get a new identity on
+  // every FamilyTreeApp render -- including the dozens-per-second renders a
+  // pan/zoom gesture produces -- which would silently defeat that
+  // memoization for every node that receives this as a prop.
+  const handlePhotoClick = useCallback((img) => {
     setModalImg(img);
     setModalOpen(true);
     confettiFired.current = false;
-  };
+  }, []);
 
-  const handleMemberSelect = (node, level) => {
+  const handleMemberSelect = useCallback((node, level) => {
     setSelectedMember(node);
     setSelectedMemberLevel(level);
-  };
+  }, []);
 
   useEffect(() => {
     if (modalOpen && !confettiFired.current) {
