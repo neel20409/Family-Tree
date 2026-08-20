@@ -780,6 +780,71 @@ const FamilyTreeApp = () => {
     }
   }, [zoomLevel, isMobile]);
 
+  // Zoom out (and center) enough to fit the *entire* expanded tree in view,
+  // used by Expand All instead of centerCanvas. centerCanvas always targets
+  // the same fixed "small tree" zoom (0.75/1x) meant for a root-only or
+  // few-generation view; at that zoom a fully expanded 10-generation tree
+  // is many times wider than the screen, so after expanding, most of what
+  // you'd pan to is empty space between distant cards with just a
+  // connector line passing through it -- no actual card content in view.
+  const fitTreeToView = useCallback(() => {
+    if (!viewportRef.current || !treeContainerRef.current) return;
+
+    const rootCard = document.querySelector('.root-node > .card-wrapper.node-box');
+    const vWidth = viewportRef.current.clientWidth;
+    const vHeight = viewportRef.current.clientHeight;
+    const treeWidth = treeContainerRef.current.scrollWidth;
+    const treeHeight = treeContainerRef.current.scrollHeight;
+
+    if (!rootCard || !treeWidth || !treeHeight) {
+      centerCanvas();
+      return;
+    }
+
+    const maxZoom = isMobile ? 0.75 : 1;
+    const horizontalMargin = isMobile ? 24 : 80;
+    // Same top clearance centerCanvas uses (header, plus the mobile icon
+    // flyout below it), and enough at the bottom to clear the controls dock.
+    const topMargin = isMobile ? 130 : 120;
+    const bottomMargin = isMobile ? 90 : 100;
+
+    const fitZoomX = (vWidth - horizontalMargin) / treeWidth;
+    const fitZoomY = (vHeight - topMargin - bottomMargin) / treeHeight;
+    const targetZoom = Math.min(maxZoom, Math.max(MIN_ZOOM, Math.min(fitZoomX, fitZoomY)));
+
+    const rootRect = rootCard.getBoundingClientRect();
+    const containerRect = treeContainerRef.current.getBoundingClientRect();
+    const rootCenterXRelativeToContainer = ((rootRect.left + rootRect.width / 2) - containerRect.left) / zoomLevel;
+    const targetPanX = (vWidth / 2) - rootCenterXRelativeToContainer * targetZoom;
+
+    setPan({ x: targetPanX, y: topMargin });
+    setZoomLevel(targetZoom);
+  }, [zoomLevel, isMobile, centerCanvas]);
+
+  // Polls the tree's rendered width until it stops growing (two consecutive
+  // identical readings), then runs the callback -- more robust than a fixed
+  // delay for a cascade whose size (and therefore settle time) depends on
+  // how much of the tree just got expanded.
+  const waitForTreeToSettle = useCallback((callback) => {
+    let lastWidth = -1;
+    let stableCount = 0;
+    let attempts = 0;
+    const check = () => {
+      const container = treeContainerRef.current;
+      if (!container) { callback(); return; }
+      const width = container.scrollWidth;
+      stableCount = width === lastWidth ? stableCount + 1 : 0;
+      lastWidth = width;
+      attempts += 1;
+      if (stableCount >= 2 || attempts >= 20) {
+        callback();
+        return;
+      }
+      setTimeout(check, 80);
+    };
+    setTimeout(check, 80);
+  }, []);
+
   // Center once on mount only -- intentionally NOT depending on centerCanvas,
   // whose identity changes on every zoomLevel update; depending on it here
   // would re-schedule this timer on every zoom and snap the view back to
@@ -840,11 +905,12 @@ const FamilyTreeApp = () => {
     setIsPlayingTour(false);
     setVisibleGenLevel(MAX_TREE_DEPTH + 1);
     setForceExpandAll(true);
-    // Same reasoning as handleRootOnly -- let the full expansion (and its
-    // layout/shift recalculation) settle before centering, so the root card
-    // stays centered instead of drifting toward whichever side the newly
-    // expanded subtree happens to be wider on.
-    setTimeout(centerCanvas, 320);
+    // Expanding all ~10 generations at once is a much bigger cascade than
+    // handleRootOnly's collapse -- a fixed delay here measured the tree
+    // mid-expansion (scrollWidth still a fraction of its final size),
+    // computing a zoom that fit the *partial* tree, not the real one. Poll
+    // scrollWidth until it stops growing instead of guessing a delay.
+    waitForTreeToSettle(fitTreeToView);
   };
 
   const toggleTour = () => {
