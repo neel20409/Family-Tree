@@ -447,6 +447,13 @@ html, body {
   transition: none;
 }
 
+/* The help guide's scripted zoom/pan demo -- slow and eased so it reads as
+   a deliberate demonstration, unlike the snappy 0.05s used for real
+   drag/pinch/reset jumps. */
+.tree-container.demo-transition {
+  transition: transform 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ==========================================================================
    Clean Flat 2D Card & Node Styling
    ========================================================================== */
@@ -950,6 +957,97 @@ html, body {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(20px);
   border-radius: 28px;
+}
+
+/* This is a live demo -- the effect behind helpDemoStep actually zooms and
+   pans the real tree while this is open -- so unlike every other modal
+   here, the backdrop stays barely-there (a hint of white wash, not a real
+   blur) rather than hiding the very thing it's demonstrating. The caption
+   sits low, out of the way of the root card where the demo motion is most
+   visible. */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 20px;
+  padding-bottom: max(110px, env(safe-area-inset-bottom, 0px) + 90px);
+  animation: fadeIn 0.3s ease;
+}
+
+.help-caption {
+  background: #ffffff;
+  color: #1e1b4b;
+  border-radius: 22px;
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.45);
+  padding: 22px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+.help-caption-icon {
+  display: inline-block;
+  font-size: 2rem;
+  animation: helpIconPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes helpIconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+.help-caption-text {
+  margin: 10px 0 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.help-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.help-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.2);
+  transition: var(--transition-smooth);
+}
+
+.help-dot.active {
+  background: #4f46e5;
+  width: 18px;
+  border-radius: 4px;
+}
+
+.help-got-it {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.help-got-it:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.6);
 }
 
 .modal-content {
