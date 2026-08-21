@@ -60,11 +60,7 @@ const translations = {
     saving: "Saving...",
     cancel: "Cancel",
     editSaved: "Saved",
-    helpTitle: "How to move around",
-    helpZoom: "Pinch, or scroll with your mouse wheel, to zoom in and out",
-    helpPan: "Drag anywhere to scroll and explore the tree",
-    helpGotIt: "Got it",
-    helpShort: "Help"
+    helpTitle: "Demo: pinch or scroll to zoom, drag to pan"
   },
   gu: {
     searchPlaceholder: "પરિવારના સભ્યને શોધો...",
@@ -118,11 +114,7 @@ const translations = {
     saving: "સાચવી રહ્યા છીએ...",
     cancel: "રદ કરો",
     editSaved: "સાચવ્યું",
-    helpTitle: "કેવી રીતે ફરવું",
-    helpZoom: "ઝૂમ ઇન-આઉટ કરવા માટે પિંચ કરો, અથવા માઉસ વ્હીલ સ્ક્રોલ કરો",
-    helpPan: "વૃક્ષ જોવા માટે ગમે ત્યાં ડ્રેગ કરો",
-    helpGotIt: "સમજાઈ ગયું",
-    helpShort: "મદદ"
+    helpTitle: "ડેમો: ઝૂમ કરવા પિંચ કરો કે સ્ક્રોલ કરો, ફરવા ડ્રેગ કરો"
   }
 };
 
@@ -811,7 +803,16 @@ const FamilyTreeApp = () => {
     at(2500, () => setHelpDemoStep(2));
     at(2900, () => setPan({ x: startPan.x - 55, y: startPan.y }));
     at(4100, () => setPan({ x: startPan.x + 55, y: startPan.y }));
-    at(5300, () => setPan(startPan));
+    // Purely a demo, not a modal waiting on the user -- it plays once and
+    // closes itself, rather than sitting there needing a tap to dismiss.
+    at(5300, () => {
+      setHelpOverlayOpen(false);
+      try {
+        window.localStorage.setItem('familyTreeHelpSeen', '1');
+      } catch {
+        // Private browsing / storage disabled -- fine, it'll just show again next visit.
+      }
+    });
 
     return () => {
       timers.forEach(clearTimeout);
@@ -1321,10 +1322,6 @@ const FamilyTreeApp = () => {
         <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
         <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>
       </button>
-      <button className={`action-btn help-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setHelpOverlayOpen(true)} title={t('helpShort')}>
-        <span className="btn-icon">❓</span>
-        <span className="btn-label">{t('helpShort')}</span>
-      </button>
     </>
   );
 
@@ -1810,36 +1807,33 @@ const FamilyTreeApp = () => {
         )}
       </AnimatePresence>
 
-      {/* --- First-visit Help Overlay: light/blur, deliberately different
-          from the rest of the app's dark glass, so it reads as a distinct
-          "tutorial" layer sitting on top rather than another content modal.
-          Plain conditional render, not AnimatePresence/motion.div: under
-          prefers-reduced-motion (which MotionConfig above respects), Framer
-          Motion's exit animation here never fires its completion callback,
-          so AnimatePresence keeps the dismissed overlay mounted forever --
-          invisible, but still `position:fixed` over the whole screen with
-          pointer-events on, silently blocking every click to the tree
-          underneath. Low stakes for the other modals (a user has to
-          deliberately open those first), but this one auto-opens for every
-          new visitor, so a broken dismiss here means the site looks dead on
-          arrival for anyone with reduced motion enabled -- not worth an
-          exit animation. */}
+      {/* --- First-visit Help Overlay: no card, no text -- just a ghost
+          cursor performing the actual pinch/drag gesture while the real
+          tree zooms and pans underneath (see the helpDemoStep effect
+          above). Plays once automatically and closes itself; tapping
+          anywhere skips it early. Plain conditional render, not
+          AnimatePresence/motion.div: under prefers-reduced-motion (which
+          MotionConfig above respects), Framer Motion's exit animation here
+          never fires its completion callback, so AnimatePresence keeps the
+          dismissed overlay mounted forever -- invisible, but still
+          `position:fixed` over the whole screen with pointer-events on,
+          silently blocking every click to the tree underneath. Low stakes
+          for the other modals (a user has to deliberately open those
+          first), but this one auto-opens for every new visitor, so a
+          broken dismiss here means the site looks dead on arrival for
+          anyone with reduced motion enabled -- not worth an exit
+          animation. */}
       {helpOverlayOpen && (
-        <div className="help-overlay" onClick={dismissHelpOverlay}>
-          {/* Only a light wash, not a heavy blur -- the whole point is
-              watching the tree itself actually zoom and pan behind it
-              (see the helpDemoStep effect above), not hiding it. */}
-          <div className="help-caption" onClick={e => e.stopPropagation()}>
-            <span className={`help-caption-icon ${helpDemoStep === 2 ? 'pan' : 'pinch'}`}>
-              {helpDemoStep === 2 ? '✋' : '🤏'}
-            </span>
-            <p className="help-caption-text">{helpDemoStep === 2 ? t('helpPan') : t('helpZoom')}</p>
-            <div className="help-progress" aria-hidden="true">
-              <span className={`help-dot ${helpDemoStep === 1 ? 'active' : ''}`} />
-              <span className={`help-dot ${helpDemoStep === 2 ? 'active' : ''}`} />
+        <div className="help-overlay" onClick={dismissHelpOverlay} role="button" aria-label={t('helpTitle')}>
+          {helpDemoStep === 1 && (
+            <div className="help-cursor-zoom">
+              <span className="help-cursor-dot dot-a" />
+              <span className="help-cursor-dot dot-b" />
             </div>
-            <button className="help-got-it" onClick={dismissHelpOverlay}>{t('helpGotIt')}</button>
-          </div>
+          )}
+          {helpDemoStep === 2 && (
+            <span className="help-cursor-dot help-cursor-pan" />
+          )}
         </div>
       )}
     </div>
