@@ -2,8 +2,6 @@ const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
@@ -12,11 +10,14 @@ const config = {
 // attempting any read/write instead of throwing on a half-empty config.
 export const isFirebaseConfigured = Boolean(config.apiKey && config.projectId);
 
-// The Firebase SDK is a few hundred KB gzipped -- most visitors never touch
-// the edit feature, so it's loaded as a separate on-demand chunk (dynamic
-// import) rather than bundled into the main entry point that has to be
-// parsed before the tree can even render. Cached after the first call so
-// repeated reads/saves in one session don't re-fetch the chunk.
+// Firestore only -- photo files go to Cloudinary instead of Firebase Storage
+// (see cloudinary.js), since Storage now requires the paid Blaze plan just
+// to turn on, and this project intentionally stays on Firebase's free tier.
+// The SDK is a few hundred KB gzipped -- most visitors never touch the edit
+// feature, so it's loaded as a separate on-demand chunk (dynamic import)
+// rather than bundled into the main entry point that has to be parsed
+// before the tree can even render. Cached after the first call so repeated
+// reads/saves in one session don't re-fetch the chunk.
 let firebasePromise = null;
 
 export function getFirebase() {
@@ -25,14 +26,11 @@ export function getFirebase() {
     firebasePromise = Promise.all([
       import('firebase/app'),
       import('firebase/firestore'),
-      import('firebase/storage'),
-    ]).then(([{ initializeApp }, firestore, storageApi]) => {
+    ]).then(([{ initializeApp }, firestore]) => {
       const app = initializeApp(config);
       return {
         db: firestore.getFirestore(app),
-        storage: storageApi.getStorage(app),
         firestore,
-        storageApi,
       };
     });
   }
