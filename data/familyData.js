@@ -115,7 +115,24 @@ const familyTree = {
                                   gujaratiName: "રતિલાલ ભટ્ટ",
                                   photo: "/photos/ratilal.avif",
                                   birthDate: "unknown",
-                                  deathDate: "unknown"
+                                  deathDate: "unknown",
+                                  children: [
+                                    {
+                                      id:"Rajnikant-bhatt",
+                                      name: "Rajnikant Bhatt",
+                                      gujaratiName: "રજનીકાન્ત ભટ્ટ",
+                                      photo: "/photos/rajnikant.avif",
+                                      birthDate: "unknown",
+                                      deathDate: "unknown"
+                                    },{
+                                      id:"Bharat-bhatt",
+                                      name: "Bharat Bhatt",
+                                      gujaratiName: "ભારત ભટ્ટ",
+                                      photo: "/photos/bharat.avif",
+                                      birthDate: "unknown",
+                                      deathDate: "unknown"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -218,6 +235,14 @@ const familyTree = {
                                   deathDate: "--",
                                   children: [
                                     {
+                                      id: "jigisha-bhatt",
+                                      name: "Jigisha Bhatt",
+                                      gujaratiName: "જિગીષા ભટ્ટ",
+                                      photo: "/photos/jigisha.avif",
+                                      birthDate: "unknown",
+                                      deathDate: "--"
+                                    },
+                                    {
                                       id: "piyushbhai-bhatt",
                                       name: "Piyushbhai Bhatt",
                                       gujaratiName: "પિયુષભાઈ ભટ્ટ",
@@ -230,7 +255,7 @@ const familyTree = {
                                           name: "Dharm",
                                           gujaratiName: "ધર્મ",
                                           photo: "/photos/dharm.avif",
-                                          birthDate: "17 Sep 2011",
+                                          birthDate: "17 Sep 2010",
                                           deathDate: "--"
                                         },
                                         {
@@ -353,7 +378,7 @@ const familyTree = {
                                           id: "rushi",
                                           name: "Rushi",
                                           gujaratiName: "",
-                                          photo: "",
+                                          photo: "/photos/rushi.avif",
                                           birthDate: "",
                                           deathDate: ""
                                         }
@@ -501,8 +526,9 @@ const familyTree = {
                           deathDate: "unknown",
                           children: [
                             {
-                              id: "chandra-bhatt",
-                              name: "Chandra Bhatt",
+                              id: "chandrakant-bhatt",
+                              name: "Chandrakant Bhatt",
+                              gujaratiName: "ચંદ્રકાંત ભટ્ટ",
                               photo: "/photos/chandra.avif",
                               birthDate: "unknown",
                               deathDate: "unknown",
@@ -511,6 +537,14 @@ const familyTree = {
                                   id: "rakesh-bhatt",
                                   name: "Rakesh Bhatt",
                                   photo: "/photos/rakesh.avif",
+                                  birthDate: "unknown",
+                                  deathDate: "unknown"
+                                },
+                                {
+                                  id: "MavleshBhai-bhatt",
+                                  name: "MavleshBhai Bhatt",
+                                  gujaratiName: "મવલેશભાઈ ભટ્ટ",
+                                  photo: "/photos/MavleshBhai.avif",
                                   birthDate: "unknown",
                                   deathDate: "unknown"
                                 }
@@ -540,15 +574,17 @@ const familyTree = {
                               ]
                             },
                             {
-                              id: "ga",
-                              name: "Ga",
-                              photo: "/photos/ga.avif",
+                              id: "ganshyam-bhatt",
+                              name: "Ganshyam Bhatt",
+                              gujaratiName: "ગણશ્યામ ભટ્ટ",
+                              photo: "/photos/ganshyam.avif",
                               birthDate: "unknown",
                               deathDate: "unknown"
                             },
                             {
                               id: "kanu-bhatt",
                               name: "Kanu Bhatt",
+                              gujaratiName: "કનુ ભટ્ટ",
                               photo: "/photos/kanu.avif",
                               birthDate: "unknown",
                               deathDate: "unknown"
@@ -562,6 +598,7 @@ const familyTree = {
                 {
                   id: "anoomram-bhatt",
                   name: "Anoomram Bhatt",
+                  gujaratiName: "અનોમરામ ભટ્ટ",
                   photo: "/photos/anoomram.avif",
                   birthDate: "unknown",
                   deathDate: "unknown"
@@ -571,6 +608,7 @@ const familyTree = {
             {
               id: "gangaram-bhatt",
               name: "Gangaram Bhatt",
+              gujaratiName: "ગંગારામ ભટ્ટ",
               photo: "/photos/gangaram.avif",
               birthDate: "unknown",
               deathDate: "unknown",
@@ -578,6 +616,7 @@ const familyTree = {
                 {
                   id: "karsandev-bhatt",
                   name: "Karsandev Bhatt",
+                  gujaratiName: "કરસાણદેવ ભટ્ટ",
                   photo: "/photos/karsandev.avif",
                   birthDate: "unknown",
                   deathDate: "unknown",
@@ -585,6 +624,7 @@ const familyTree = {
                     {
                       id: "mansaram-bhatt",
                       name: "Mansaram Bhatt",
+                      gujaratiName: "મનસરામ ભટ્ટ",
                       photo: "/photos/mansaram.avif",
                       birthDate: "unknown",
                       deathDate: "unknown"
@@ -594,6 +634,7 @@ const familyTree = {
                 {
                   id: "radheram-bhatt",
                   name: "Radheram Bhatt",
+                  gujaratiName: "રાધેરમ ભટ્ટ",
                   photo: "/photos/radheram.avif",
                   birthDate: "unknown",
                   deathDate: "unknown"
@@ -605,8 +646,9 @@ const familyTree = {
       ]
     },
     {
-      id: "vancharam-bhatt",
-      name: "vancharam Bhatt",
+      id: "vanchharam-bhatt",
+      name: "Vanchharam Bhatt",
+      gujaratiName: "વનછરામ ભટ્ટ",
       photo: "/photos/vancharam.avif",
       birthDate: "unknown",
       deathDate: "unknown",
@@ -614,6 +656,7 @@ const familyTree = {
         {
           id: "laskhmanram-bhatt",
           name: "Laskhmanram Bhatt",
+          gujaratiName: "લક્ષ્મણરામ ભટ્ટ",
           photo: "/photos/laskhmanram.avif",
           birthDate: "unknown",
           deathDate: "unknown",
@@ -621,6 +664,7 @@ const familyTree = {
             {
               id: "mahatmaram-bhatt",
               name: "Mahatmaram Bhatt",
+              gujaratiName: "મહાત્મારામ ભટ્ટ",
               photo: "/photos/mahatmaram.avif",
               birthDate: "unknown",
               deathDate: "unknown",
@@ -628,6 +672,7 @@ const familyTree = {
                 {
                   id: "narayan-bhatt",
                   name: "Narayan bhatt",
+                  gujaratiName: "નારાયણ ભટ્ટ",
                   photo: "/photos/narayan.avif",
                   birthDate: "unknown",
                   deathDate: "unknown"
@@ -637,6 +682,7 @@ const familyTree = {
             {
               id: "randheer-bhatt",
               name: "Randheer Bhatt",
+              gujaratiName: "રંધીર ભટ્ટ",
               photo: "/photos/randheer.avif",
               birthDate: "unknown",
               deathDate: "unknown"

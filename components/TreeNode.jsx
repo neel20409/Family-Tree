@@ -1492,7 +1492,7 @@ const FamilyTreeApp = () => {
 
       {/* --- Credit Footer: tucked below the controls dock, deliberately quiet --- */}
       <footer className="credit-footer">
-        Preserved by Ramanlal Bhatt · Created by Neel Bhatt
+        Preserved by Ramanlal Bhatt · Crafted by Neel Bhatt
       </footer>
 
       {/* --- Mobile Member Bottom Sheet Drawer --- */}
