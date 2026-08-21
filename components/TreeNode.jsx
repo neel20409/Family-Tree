@@ -806,8 +806,19 @@ const FamilyTreeApp = () => {
   panRef.current = pan;
   const zoomRef = useRef(zoomLevel);
   zoomRef.current = zoomLevel;
+  const genLevelRef = useRef(visibleGenLevel);
+  genLevelRef.current = visibleGenLevel;
 
-  const [helpDemoStep, setHelpDemoStep] = useState(0); // 0 idle, 1 zoom, 2 pan
+  // So the help demo can point its ghost cursor at wherever these buttons
+  // actually render -- mobile and desktop use different dock layouts, but
+  // whichever one is mounted gets the same ref.
+  const prevGenBtnRef = useRef(null);
+  const nextGenBtnRef = useRef(null);
+  const resetBtnRef = useRef(null);
+
+  const [helpDemoStep, setHelpDemoStep] = useState(0); // 0 idle, 1 zoom, 2 pan, 3 prev, 4 next, 5 reset
+  const [helpCursorPos, setHelpCursorPos] = useState(null); // {x,y} center of the button being demoed
+  const [helpTapping, setHelpTapping] = useState(false);
   // Drives the guided tour by animating the *real* pan/zoom state through a
   // short scripted sequence -- showing the canvas actually zoom and pan,
   // not just describing the gesture in text -- then restoring exactly
@@ -819,8 +830,23 @@ const FamilyTreeApp = () => {
     }
     const startPan = panRef.current;
     const startZoom = zoomRef.current;
+    const startGenLevel = genLevelRef.current;
     const timers = [];
     const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+    // Points the ghost cursor at a button's current on-screen center and,
+    // after it's had a moment to visibly arrive, plays a quick tap pulse
+    // and fires the button's real handler -- the same "show the actual
+    // effect, don't just describe it" idea as the zoom/pan phases above.
+    const clickButton = (ref, handler) => {
+      const rect = ref.current?.getBoundingClientRect();
+      if (rect) setHelpCursorPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      setTimeout(() => {
+        setHelpTapping(true);
+        handler();
+        setTimeout(() => setHelpTapping(false), 200);
+      }, 500);
+    };
 
     setHelpDemoStep(1);
     at(500, () => setZoomLevel(startZoom * 1.35));
@@ -828,9 +854,15 @@ const FamilyTreeApp = () => {
     at(2500, () => setHelpDemoStep(2));
     at(2900, () => setPan({ x: startPan.x - 55, y: startPan.y }));
     at(4100, () => setPan({ x: startPan.x + 55, y: startPan.y }));
+    at(5300, () => setPan(startPan));
+
+    at(5900, () => { setHelpDemoStep(3); clickButton(prevGenBtnRef, handlePrevGen); });
+    at(7200, () => { setHelpDemoStep(4); clickButton(nextGenBtnRef, handleNextGen); });
+    at(8500, () => { setHelpDemoStep(5); clickButton(resetBtnRef, isMobile ? handleRootOnly : centerCanvas); });
+
     // Purely a demo, not a modal waiting on the user -- it plays once and
     // closes itself, rather than sitting there needing a tap to dismiss.
-    at(5300, () => {
+    at(9800, () => {
       setHelpOverlayOpen(false);
       try {
         window.localStorage.setItem('familyTreeHelpSeen', '1');
@@ -843,8 +875,19 @@ const FamilyTreeApp = () => {
       timers.forEach(clearTimeout);
       setZoomLevel(startZoom);
       setPan(startPan);
+      setVisibleGenLevel(startGenLevel);
+      setHelpCursorPos(null);
+      setHelpTapping(false);
     };
-  }, [helpOverlayOpen]);
+    // handlePrevGen/handleNextGen/handleRootOnly/centerCanvas are all
+    // recreated every render (centerCanvas is memoized, but its own deps
+    // include isMobile, already listed below) -- including them here would
+    // restart this whole sequence on every render the demo itself causes,
+    // since every setPan/setZoomLevel/etc. call re-renders the component.
+    // Only helpOverlayOpen and isMobile (which button set to point at)
+    // should actually restart it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [helpOverlayOpen, isMobile]);
 
   const t = useTranslation(isGujarati);
 
@@ -1484,7 +1527,7 @@ const FamilyTreeApp = () => {
       <div className="controls-dock">
         {isMobile ? (
           <div className="mobile-dock-row">
-            <button className="dock-btn mobile-labeled" onClick={handlePrevGen} title={t('prevGen')}>
+            <button ref={prevGenBtnRef} className="dock-btn mobile-labeled" onClick={handlePrevGen} title={t('prevGen')}>
               <span className="btn-icon">◀</span>
               <span className="btn-label">{t('prevShort')}</span>
             </button>
@@ -1493,7 +1536,7 @@ const FamilyTreeApp = () => {
               {t('genShort')} {visibleGenLevel - 1}/{MAX_TREE_DEPTH}
             </span>
 
-            <button className="dock-btn mobile-labeled" onClick={handleNextGen} title={t('nextGen')}>
+            <button ref={nextGenBtnRef} className="dock-btn mobile-labeled" onClick={handleNextGen} title={t('nextGen')}>
               <span className="btn-icon">▶</span>
               <span className="btn-label">{t('nextShort')}</span>
             </button>
@@ -1504,7 +1547,7 @@ const FamilyTreeApp = () => {
                 both jobs here: recenter the canvas and drop back to
                 generation 1, matching what the desktop dock splits into
                 two buttons. */}
-            <button className="dock-btn mobile-labeled" onClick={handleRootOnly} title={t('resetZoom')}>
+            <button ref={resetBtnRef} className="dock-btn mobile-labeled" onClick={handleRootOnly} title={t('resetZoom')}>
               <span className="btn-icon">🎯 {Math.round(zoomLevel * 100)}%</span>
               <span className="btn-label">{t('resetShort')}</span>
             </button>
@@ -1524,7 +1567,7 @@ const FamilyTreeApp = () => {
             <button className="dock-btn" onClick={handleRootOnly} title={t('rootOnly')}>
               ⏮️ {t('rootOnly')}
             </button>
-            <button className="dock-btn" onClick={handlePrevGen} title={t('prevGen')}>
+            <button ref={prevGenBtnRef} className="dock-btn" onClick={handlePrevGen} title={t('prevGen')}>
               ◀ {t('prevGen')}
             </button>
 
@@ -1532,7 +1575,7 @@ const FamilyTreeApp = () => {
               {t('generation')} {visibleGenLevel - 1}/{MAX_TREE_DEPTH}
             </span>
 
-            <button className="dock-btn" onClick={handleNextGen} title={t('nextGen')}>
+            <button ref={nextGenBtnRef} className="dock-btn" onClick={handleNextGen} title={t('nextGen')}>
               {t('nextGen')} ▶
             </button>
 
@@ -1555,7 +1598,7 @@ const FamilyTreeApp = () => {
             <button className="dock-btn" onClick={() => handleZoomChange(0.15)} title="Zoom In">
               ➕
             </button>
-            <button className="dock-btn" onClick={centerCanvas} title={t('resetZoom')}>
+            <button ref={resetBtnRef} className="dock-btn" onClick={centerCanvas} title={t('resetZoom')}>
               🎯 {t('resetZoom')}
             </button>
           </div>
@@ -1885,6 +1928,12 @@ const FamilyTreeApp = () => {
           )}
           {helpDemoStep === 2 && (
             <span className="help-cursor-dot help-cursor-pan" />
+          )}
+          {helpDemoStep >= 3 && helpCursorPos && (
+            <span
+              className={`help-cursor-dot help-cursor-click ${helpTapping ? 'tapping' : ''}`}
+              style={{ left: helpCursorPos.x, top: helpCursorPos.y }}
+            />
           )}
         </div>
       )}
