@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Same no-login tradeoff as firestore.rules: anyone can upload a replacement
+// photo. This only constrains what can be uploaded (must be an image, under
+// 5MB) and where (member-photos/*), matching the 5MB cap the client already
+// enforces before it ever gets here.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /member-photos/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+      allow delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

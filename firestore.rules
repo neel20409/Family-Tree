@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// No login on this site -- anyone can create/update a memberEdits doc. These
+// rules only constrain the *shape* of what can be written (known fields,
+// string types, a length cap) and forbid delete entirely. They cannot stop a
+// bad-faith edit from a legitimate one since there's no identity to check;
+// that tradeoff is accepted in exchange for not requiring visitors to log in.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /memberEdits/{memberId} {
+      allow read: if true;
+
+      allow create, update: if request.resource.data.keys().hasOnly(['photoURL', 'birthDate', 'deathDate', 'updatedAt'])
+        && (!('photoURL' in request.resource.data) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() < 300))
+        && (!('birthDate' in request.resource.data) || (request.resource.data.birthDate is string && request.resource.data.birthDate.size() < 300))
+        && (!('deathDate' in request.resource.data) || (request.resource.data.deathDate is string && request.resource.data.deathDate.size() < 300))
+        && request.resource.data.updatedAt is timestamp;
+
+      allow delete: if false;
+    }
+
+    // Everything else stays locked down.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
