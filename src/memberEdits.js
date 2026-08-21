@@ -1,6 +1,7 @@
 import { getFirebase, isFirebaseConfigured } from './firebase';
+import { uploadPhoto } from './cloudinary';
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB, matches storage.rules cap
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB, matches the Cloudinary preset's max file size
 const MAX_PHOTO_EDGE = 1600; // px, longest edge after client-side resize
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -17,7 +18,7 @@ export function validatePhotoFile(file) {
 
 // Downscales a large photo (phone camera photos are routinely 5-10MB) to a
 // sane display size before it ever leaves the browser, so a single edit
-// can't quietly burn through the free-tier storage/bandwidth quota.
+// can't quietly burn through the free-tier bandwidth quota.
 async function resizeImageFile(file) {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(bitmap.width, bitmap.height));
@@ -49,7 +50,7 @@ export async function saveMemberEdit(id, { photoFile, birthDate, deathDate }) {
   if (!isFirebaseConfigured) {
     throw new Error('Editing isn’t available yet -- this deployment has no backend configured.');
   }
-  const { db, storage, firestore, storageApi } = await getFirebase();
+  const { db, firestore } = await getFirebase();
 
   const data = {};
 
@@ -57,10 +58,7 @@ export async function saveMemberEdit(id, { photoFile, birthDate, deathDate }) {
     const error = validatePhotoFile(photoFile);
     if (error) throw new Error(error);
     const resized = await resizeImageFile(photoFile);
-    const ext = resized.type === 'image/png' ? 'png' : 'jpg';
-    const photoRef = storageApi.ref(storage, `member-photos/${id}.${ext}`);
-    await storageApi.uploadBytes(photoRef, resized, { contentType: resized.type });
-    data.photoURL = await storageApi.getDownloadURL(photoRef);
+    data.photoURL = await uploadPhoto(resized, id);
   }
 
   if (birthDate !== undefined) data.birthDate = birthDate;
