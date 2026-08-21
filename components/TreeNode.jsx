@@ -59,7 +59,12 @@ const translations = {
     save: "Save",
     saving: "Saving...",
     cancel: "Cancel",
-    editSaved: "Saved"
+    editSaved: "Saved",
+    helpTitle: "How to move around",
+    helpZoom: "Pinch, or scroll with your mouse wheel, to zoom in and out",
+    helpPan: "Drag anywhere to scroll and explore the tree",
+    helpGotIt: "Got it",
+    helpShort: "Help"
   },
   gu: {
     searchPlaceholder: "પરિવારના સભ્યને શોધો...",
@@ -112,7 +117,12 @@ const translations = {
     save: "સાચવો",
     saving: "સાચવી રહ્યા છીએ...",
     cancel: "રદ કરો",
-    editSaved: "સાચવ્યું"
+    editSaved: "સાચવ્યું",
+    helpTitle: "કેવી રીતે ફરવું",
+    helpZoom: "ઝૂમ ઇન-આઉટ કરવા માટે પિંચ કરો, અથવા માઉસ વ્હીલ સ્ક્રોલ કરો",
+    helpPan: "વૃક્ષ જોવા માટે ગમે ત્યાં ડ્રેગ કરો",
+    helpGotIt: "સમજાઈ ગયું",
+    helpShort: "મદદ"
   }
 };
 
@@ -686,6 +696,19 @@ const FamilyTreeApp = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImg, setModalImg] = useState(null);
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  // Shown once automatically on a visitor's first-ever visit (nothing on the
+  // canvas hints that it's pinch/scroll-zoomable and drag-to-pan), then only
+  // again if they tap the Help button. localStorage read is guarded for SSR
+  // safety even though this app has none today, matching the window.innerWidth
+  // guard pattern already used for isMobile below.
+  const [helpOverlayOpen, setHelpOverlayOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return !window.localStorage.getItem('familyTreeHelpSeen');
+    } catch {
+      return false;
+    }
+  });
   const [isGujarati, setIsGujarati] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandPath, setExpandPath] = useState([]);
@@ -757,6 +780,45 @@ const FamilyTreeApp = () => {
   const panStartRef = useRef({ x: 0, y: 0 });
   const touchDistanceRef = useRef(null);
   const touchZoomStartRef = useRef(1);
+
+  // Kept in sync every render (not effect-driven) purely so the help demo
+  // below can read the *current* pan/zoom without needing them in its
+  // effect's dependency array -- they're both driven by the demo itself, so
+  // depending on them would re-fire the effect mid-sequence and restart it.
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const zoomRef = useRef(zoomLevel);
+  zoomRef.current = zoomLevel;
+
+  const [helpDemoStep, setHelpDemoStep] = useState(0); // 0 idle, 1 zoom, 2 pan
+  // Drives the guided tour by animating the *real* pan/zoom state through a
+  // short scripted sequence -- showing the canvas actually zoom and pan,
+  // not just describing the gesture in text -- then restoring exactly
+  // where the user had it. Runs once per time the overlay opens.
+  useEffect(() => {
+    if (!helpOverlayOpen) {
+      setHelpDemoStep(0);
+      return;
+    }
+    const startPan = panRef.current;
+    const startZoom = zoomRef.current;
+    const timers = [];
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+    setHelpDemoStep(1);
+    at(500, () => setZoomLevel(startZoom * 1.35));
+    at(1900, () => setZoomLevel(startZoom));
+    at(2500, () => setHelpDemoStep(2));
+    at(2900, () => setPan({ x: startPan.x - 55, y: startPan.y }));
+    at(4100, () => setPan({ x: startPan.x + 55, y: startPan.y }));
+    at(5300, () => setPan(startPan));
+
+    return () => {
+      timers.forEach(clearTimeout);
+      setZoomLevel(startZoom);
+      setPan(startPan);
+    };
+  }, [helpOverlayOpen]);
 
   const t = useTranslation(isGujarati);
 
@@ -1225,6 +1287,15 @@ const FamilyTreeApp = () => {
     }
   };
 
+  const dismissHelpOverlay = () => {
+    setHelpOverlayOpen(false);
+    try {
+      window.localStorage.setItem('familyTreeHelpSeen', '1');
+    } catch {
+      // Private browsing / storage disabled -- fine, it'll just show again next visit.
+    }
+  };
+
   // Icon + short label everywhere -- on desktop it's a normal side-by-side
   // pill; on mobile "icon-only" now means compact (stacked icon-over-label,
   // like the bottom dock's mobile-labeled buttons), not label-less. A row of
@@ -1249,6 +1320,10 @@ const FamilyTreeApp = () => {
       <button className={`action-btn fullscreen-btn ${isMobile ? 'icon-only' : ''}`} onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
         <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
         <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>
+      </button>
+      <button className={`action-btn help-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setHelpOverlayOpen(true)} title={t('helpShort')}>
+        <span className="btn-icon">❓</span>
+        <span className="btn-label">{t('helpShort')}</span>
       </button>
     </>
   );
@@ -1563,7 +1638,7 @@ const FamilyTreeApp = () => {
           // is only useful for the *discrete* jumps (reset, expand-all,
           // search, +/- buttons), so it's suppressed during active gestures
           // and left on for everything else.
-          className={`tree-container ${(isDragging || isPinching) ? 'no-transition' : ''}`}
+          className={`tree-container ${(isDragging || isPinching) ? 'no-transition' : ''} ${helpDemoStep ? 'demo-transition' : ''}`}
           ref={treeContainerRef}
           style={{
             transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoomLevel})`,
@@ -1734,6 +1809,39 @@ const FamilyTreeApp = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* --- First-visit Help Overlay: light/blur, deliberately different
+          from the rest of the app's dark glass, so it reads as a distinct
+          "tutorial" layer sitting on top rather than another content modal.
+          Plain conditional render, not AnimatePresence/motion.div: under
+          prefers-reduced-motion (which MotionConfig above respects), Framer
+          Motion's exit animation here never fires its completion callback,
+          so AnimatePresence keeps the dismissed overlay mounted forever --
+          invisible, but still `position:fixed` over the whole screen with
+          pointer-events on, silently blocking every click to the tree
+          underneath. Low stakes for the other modals (a user has to
+          deliberately open those first), but this one auto-opens for every
+          new visitor, so a broken dismiss here means the site looks dead on
+          arrival for anyone with reduced motion enabled -- not worth an
+          exit animation. */}
+      {helpOverlayOpen && (
+        <div className="help-overlay" onClick={dismissHelpOverlay}>
+          {/* Only a light wash, not a heavy blur -- the whole point is
+              watching the tree itself actually zoom and pan behind it
+              (see the helpDemoStep effect above), not hiding it. */}
+          <div className="help-caption" onClick={e => e.stopPropagation()}>
+            <span className={`help-caption-icon ${helpDemoStep === 2 ? 'pan' : 'pinch'}`}>
+              {helpDemoStep === 2 ? '✋' : '🤏'}
+            </span>
+            <p className="help-caption-text">{helpDemoStep === 2 ? t('helpPan') : t('helpZoom')}</p>
+            <div className="help-progress" aria-hidden="true">
+              <span className={`help-dot ${helpDemoStep === 1 ? 'active' : ''}`} />
+              <span className={`help-dot ${helpDemoStep === 2 ? 'active' : ''}`} />
+            </div>
+            <button className="help-got-it" onClick={dismissHelpOverlay}>{t('helpGotIt')}</button>
+          </div>
+        </div>
+      )}
     </div>
     </MotionConfig>
   );
