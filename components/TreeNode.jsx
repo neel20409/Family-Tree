@@ -1254,27 +1254,27 @@ const FamilyTreeApp = () => {
     }
   };
 
-  // Icon-only on mobile (its own small floating tier below the header, where
-  // there's no room for label text); icon + short label on desktop, where
-  // an icon-only row of 📜🔍🇬🇧⛶ reads as an unlabeled row of symbols with
-  // no indication of what each one does.
+  // Icon + short label everywhere -- on desktop it's a normal side-by-side
+  // pill; on mobile "icon-only" now means compact (stacked icon-over-label,
+  // like the bottom dock's mobile-labeled buttons), not label-less. A row of
+  // bare 📜🔍🇬🇧⛶ symbols gave users no indication of what each one does.
   const headerActionButtons = (
     <>
       <button className={`action-btn source-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setSourceModalOpen(true)} title={t('source')}>
         <span className="btn-icon">📜</span>
-        {!isMobile && <span className="btn-label">{t('docsShort')}</span>}
+        <span className="btn-label">{t('docsShort')}</span>
       </button>
       <button className={`action-btn ${isMobile ? 'icon-only' : ''} ${searchBarOpen ? 'active-tour' : ''}`} onClick={() => setSearchBarOpen(v => !v)} title={t('searchShort')}>
         <span className="btn-icon">🔍</span>
-        {!isMobile && <span className="btn-label">{t('searchShort')}</span>}
+        <span className="btn-label">{t('searchShort')}</span>
       </button>
       <button className={`action-btn lang-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setIsGujarati(v => !v)} title="Toggle Language">
         <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
-        {!isMobile && <span className="btn-label">{t('langShort')}</span>}
+        <span className="btn-label">{t('langShort')}</span>
       </button>
       <button className={`action-btn fullscreen-btn ${isMobile ? 'icon-only' : ''}`} onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
         <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
-        {!isMobile && <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>}
+        <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>
       </button>
     </>
   );
