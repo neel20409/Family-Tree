@@ -1269,7 +1269,10 @@ const FamilyTreeApp = () => {
         <span className="btn-label">{t('searchShort')}</span>
       </button>
       <button className={`action-btn lang-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setIsGujarati(v => !v)} title="Toggle Language">
-        <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
+        {/* Flag emoji (🇮🇳/🇬🇧) render as bare "IN"/"GB" letter pairs on
+            Windows and several other platforms that lack the flag glyphs --
+            a globe renders consistently everywhere. */}
+        <span className="btn-icon">🌐</span>
         <span className="btn-label">{t('langShort')}</span>
       </button>
       <button className={`action-btn fullscreen-btn ${isMobile ? 'icon-only' : ''}`} onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
