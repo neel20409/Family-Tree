@@ -1024,6 +1024,26 @@ html, body {
   70% { transform: translate(43px, -23px); }
 }
 
+/* One dot gliding to the Prev/Next/Reset buttons in turn and tapping each
+   -- positioned via inline left/top (the button's actual on-screen center
+   from getBoundingClientRect, read in the helpDemoStep effect) rather than
+   the fixed relative keyframes above, since these targets move depending
+   on mobile vs desktop layout. */
+.help-cursor-click {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  transition: left 0.5s ease, top 0.5s ease;
+}
+
+.help-cursor-click.tapping {
+  animation: helpTap 0.2s ease;
+}
+
+@keyframes helpTap {
+  50% { transform: translate(-50%, -50%) scale(0.7); }
+}
+
 .modal-content {
   position: relative;
   max-width: 90vw;
