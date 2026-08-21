@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
+import EditMemberModal from './EditMemberModal';
+import { fetchAllOverrides } from '../src/memberEdits';
 import './TreeNode.css';
 
 // Translations object
@@ -46,7 +48,18 @@ const translations = {
     tourShort: "Tour",
     pauseShort: "Pause",
     resetShort: "Reset",
-    genShort: "Gen"
+    genShort: "Gen",
+    editMember: "Edit Member",
+    changePhoto: "Change Photo",
+    birthDateLabel: "Birth Date",
+    deathStatus: "Status",
+    deceased: "Deceased",
+    living: "Living",
+    unknown: "Unknown",
+    save: "Save",
+    saving: "Saving...",
+    cancel: "Cancel",
+    editSaved: "Saved"
   },
   gu: {
     searchPlaceholder: "પરિવારના સભ્યને શોધો...",
@@ -88,7 +101,18 @@ const translations = {
     tourShort: "ટૂર",
     pauseShort: "થોભો",
     resetShort: "રિસેટ",
-    genShort: "પીઢી"
+    genShort: "પીઢી",
+    editMember: "સભ્ય સંપાદિત કરો",
+    changePhoto: "ફોટો બદલો",
+    birthDateLabel: "જન્મ તારીખ",
+    deathStatus: "સ્થિતિ",
+    deceased: "અવસાન થયું",
+    living: "જીવિત",
+    unknown: "અજ્ઞાત",
+    save: "સાચવો",
+    saving: "સાચવી રહ્યા છીએ...",
+    cancel: "રદ કરો",
+    editSaved: "સાચવ્યું"
   }
 };
 
@@ -163,6 +187,31 @@ const getOptimizedPhotoBase = (photo) => {
   }
   return getAssetPath(cleanPhoto);
 };
+
+// A member-uploaded photo is a live Firebase Storage download URL, not one
+// of the build-time-generated /photos/ paths -- it has no pre-optimized
+// avif/webp/jpg triplet, so it must be rendered as a plain <img src>
+// instead of going through getOptimizedPhotoBase + a <picture> element.
+const isPhotoURL = (photo) => typeof photo === 'string' && /^https?:\/\//.test(photo);
+
+// Merges Firestore memberEdits into a fresh copy of the static tree, keyed
+// by the stable `id` every member now has (see scripts/add-member-ids.mjs).
+// Returned as a brand-new tree object so it flows down through TreeNode's
+// existing `node`/`node.children` props unchanged -- every render site that
+// already reads node.photo/birthDate/deathDate picks up the override for
+// free, with no per-call-site plumbing needed. Skips cloning entirely when
+// there are no overrides yet (the common case before the fetch resolves).
+function applyOverrides(node, overrides) {
+  if (!node || overrides.size === 0) return node;
+  const override = node.id ? overrides.get(node.id) : null;
+  const children = node.children ? node.children.map((child) => applyOverrides(child, overrides)) : node.children;
+  if (!override) return children === node.children ? node : { ...node, children };
+  const patch = {};
+  if (override.photoURL) patch.photo = override.photoURL;
+  if (override.birthDate !== undefined) patch.birthDate = override.birthDate;
+  if (override.deathDate !== undefined) patch.deathDate = override.deathDate;
+  return { ...node, ...patch, children };
+}
 
 // Helper to normalize names for search matching
 function normalizeName(name) {
@@ -343,6 +392,7 @@ const TreeNode = React.memo(({
   onShapeChange,
   onPhotoClick,
   onMemberSelect,
+  onEditClick,
   expandPath = [],
   highlightName = '',
   activePath = [],
@@ -421,7 +471,7 @@ const TreeNode = React.memo(({
       popAudioRef.current.play().catch(() => {});
     }
     if (node.photo && onPhotoClick) {
-      onPhotoClick(getOptimizedPhotoBase(node.photo));
+      onPhotoClick(isPhotoURL(node.photo) ? node.photo : getOptimizedPhotoBase(node.photo));
     }
   };
 
@@ -458,25 +508,48 @@ const TreeNode = React.memo(({
           </span>
         )}
 
+        {/* Edit photo/dates -- opens a modal, independent of the card's own
+            expand/collapse click and the photo's zoom-in click below. */}
+        {onEditClick && (
+          <button
+            className="edit-member-btn"
+            onClick={(e) => { e.stopPropagation(); onEditClick(node, level); }}
+            title={t('editMember')}
+            aria-label={t('editMember')}
+          >
+            ✏️
+          </button>
+        )}
+
         {/* Node Photo Avatar */}
-        <div 
-          className={`node-photo ${imageLoadError ? 'image-error' : ''}`} 
+        <div
+          className={`node-photo ${imageLoadError ? 'image-error' : ''}`}
           onClick={handlePhotoSelect}
           title={node.photo ? "Click to view photo" : ""}
           style={{ cursor: node.photo ? 'zoom-in' : 'pointer' }}
         >
           {node.photo && !imageLoadError ? (
-            <picture>
-              <source srcSet={`${getOptimizedPhotoBase(node.photo)}.avif`} type="image/avif" />
-              <source srcSet={`${getOptimizedPhotoBase(node.photo)}.webp`} type="image/webp" />
-              <img 
-                src={`${getOptimizedPhotoBase(node.photo)}.jpg`}
-                alt={node.name} 
+            isPhotoURL(node.photo) ? (
+              <img
+                src={node.photo}
+                alt={node.name}
                 className="avatar-img"
                 onError={() => setImageLoadError(true)}
                 onLoad={() => setImageLoadError(false)}
               />
-            </picture>
+            ) : (
+              <picture>
+                <source srcSet={`${getOptimizedPhotoBase(node.photo)}.avif`} type="image/avif" />
+                <source srcSet={`${getOptimizedPhotoBase(node.photo)}.webp`} type="image/webp" />
+                <img
+                  src={`${getOptimizedPhotoBase(node.photo)}.jpg`}
+                  alt={node.name}
+                  className="avatar-img"
+                  onError={() => setImageLoadError(true)}
+                  onLoad={() => setImageLoadError(false)}
+                />
+              </picture>
+            )
           ) : (
             <div className="node-photo-placeholder">
               {node.name ? node.name.substring(0, 2).toUpperCase() : '??'}
@@ -616,6 +689,7 @@ const TreeNode = React.memo(({
                   onShapeChange={onShapeChange}
                   onPhotoClick={onPhotoClick}
                   onMemberSelect={onMemberSelect}
+                  onEditClick={onEditClick}
                   expandPath={expandPath}
                   highlightName={highlightName}
                   activePath={activePath}
@@ -671,6 +745,30 @@ const FamilyTreeApp = () => {
   // blank, never that glyph.
   const [watermarkLoaded, setWatermarkLoaded] = useState(false);
   const [brandLogoLoaded, setBrandLogoLoaded] = useState(false);
+
+  // Shared, visitor-submitted photo/date overrides (Firestore), keyed by
+  // member id. Fetched once on mount; merged into a fresh copy of the
+  // static tree below so every existing render path picks them up for free.
+  const [overrides, setOverrides] = useState(() => new Map());
+  const [editingMember, setEditingMember] = useState(null);
+
+  useEffect(() => {
+    fetchAllOverrides().then(setOverrides).catch(() => {});
+  }, []);
+
+  const effectiveTree = useMemo(() => applyOverrides(familyTree, overrides), [overrides]);
+
+  const handleEditClick = useCallback((node) => {
+    setEditingMember(node);
+  }, []);
+
+  const handleEditSaved = useCallback((id, patch) => {
+    setOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(id, { ...next.get(id), ...patch });
+      return next;
+    });
+  }, []);
 
   // Whole-tree connector geometry (card shifts + line paths), recomputed in
   // one bottom-up pass by computeTreeLayout -- see that function for why
@@ -1411,7 +1509,7 @@ const FamilyTreeApp = () => {
               <div className="member-sheet-header">
                 <div className="member-sheet-avatar">
                   {selectedMember.photo ? (
-                    <img src={`${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
+                    <img src={isPhotoURL(selectedMember.photo) ? selectedMember.photo : `${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
                   ) : (
                     <span>{selectedMember.name ? selectedMember.name.substring(0, 2).toUpperCase() : '??'}</span>
                   )}
@@ -1438,7 +1536,7 @@ const FamilyTreeApp = () => {
                 <button
                   className="drawer-action-btn primary"
                   onClick={() => {
-                    handlePhotoClick(getOptimizedPhotoBase(selectedMember.photo));
+                    handlePhotoClick(isPhotoURL(selectedMember.photo) ? selectedMember.photo : getOptimizedPhotoBase(selectedMember.photo));
                     setSelectedMember(null);
                   }}
                 >
@@ -1447,6 +1545,20 @@ const FamilyTreeApp = () => {
               )}
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- Edit Member Modal (photo upload + birth/death date edit) --- */}
+      <AnimatePresence>
+        {editingMember && (
+          <EditMemberModal
+            member={editingMember}
+            currentPhotoSrc={editingMember.photo ? (isPhotoURL(editingMember.photo) ? editingMember.photo : `${getOptimizedPhotoBase(editingMember.photo)}.jpg`) : null}
+            isGujarati={isGujarati}
+            t={t}
+            onClose={() => setEditingMember(null)}
+            onSaved={handleEditSaved}
+          />
         )}
       </AnimatePresence>
 
@@ -1479,10 +1591,12 @@ const FamilyTreeApp = () => {
           }}
         >
           <TreeNode
+            node={effectiveTree}
             layoutMap={layoutMap}
             onShapeChange={recalcLayout}
             onPhotoClick={handlePhotoClick}
             onMemberSelect={handleMemberSelect}
+            onEditClick={handleEditClick}
             expandPath={expandPath}
             highlightName={highlightName}
             activePath={activePath}
@@ -1515,11 +1629,15 @@ const FamilyTreeApp = () => {
             >
               <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">&times;</button>
               <div className="modal-body">
-                <picture>
-                  <source srcSet={`${modalImg}.avif`} type="image/avif" />
-                  <source srcSet={`${modalImg}.webp`} type="image/webp" />
-                  <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
-                </picture>
+                {isPhotoURL(modalImg) ? (
+                  <img src={modalImg} alt="Family Member" className="enlarged-image" />
+                ) : (
+                  <picture>
+                    <source srcSet={`${modalImg}.avif`} type="image/avif" />
+                    <source srcSet={`${modalImg}.webp`} type="image/webp" />
+                    <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
+                  </picture>
+                )}
               </div>
             </motion.div>
           </motion.div>
