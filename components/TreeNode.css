@@ -1096,13 +1096,19 @@ html, body {
     padding: 2px 5px;
   }
 
-  /* Small icon-only buttons for the floating second tier (header-actions-flyout) */
+  /* Small icon+label buttons for the floating second tier
+     (header-actions-flyout) -- same compact stacked layout as
+     .dock-btn.mobile-labeled below, so mobile isn't left with unlabeled
+     icons even though there's no room for a full-width side-by-side label. */
   .action-btn.icon-only {
-    width: 26px;
-    height: 26px;
-    font-size: 0.68rem;
-    border-radius: 50%;
-    padding: 0;
+    flex-direction: column;
+    justify-content: center;
+    width: auto;
+    min-width: 32px;
+    height: 34px;
+    padding: 3px 5px;
+    gap: 1px;
+    border-radius: 12px;
   }
 
   .dock-btn.mobile-labeled {
