@@ -1254,21 +1254,27 @@ const FamilyTreeApp = () => {
     }
   };
 
-  // Icon-only everywhere now -- rendered inline in the header on desktop, or
-  // in their own small floating tier below it on mobile (see JSX below).
+  // Icon-only on mobile (its own small floating tier below the header, where
+  // there's no room for label text); icon + short label on desktop, where
+  // an icon-only row of 📜🔍🇬🇧⛶ reads as an unlabeled row of symbols with
+  // no indication of what each one does.
   const headerActionButtons = (
     <>
-      <button className="action-btn icon-only source-btn" onClick={() => setSourceModalOpen(true)} title={t('source')}>
+      <button className={`action-btn source-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setSourceModalOpen(true)} title={t('source')}>
         <span className="btn-icon">📜</span>
+        {!isMobile && <span className="btn-label">{t('docsShort')}</span>}
       </button>
-      <button className={`action-btn icon-only ${searchBarOpen ? 'active-tour' : ''}`} onClick={() => setSearchBarOpen(v => !v)} title={t('searchShort')}>
+      <button className={`action-btn ${isMobile ? 'icon-only' : ''} ${searchBarOpen ? 'active-tour' : ''}`} onClick={() => setSearchBarOpen(v => !v)} title={t('searchShort')}>
         <span className="btn-icon">🔍</span>
+        {!isMobile && <span className="btn-label">{t('searchShort')}</span>}
       </button>
-      <button className="action-btn icon-only lang-btn" onClick={() => setIsGujarati(v => !v)} title="Toggle Language">
+      <button className={`action-btn lang-btn ${isMobile ? 'icon-only' : ''}`} onClick={() => setIsGujarati(v => !v)} title="Toggle Language">
         <span className="btn-icon">{isGujarati ? '🇮🇳' : '🇬🇧'}</span>
+        {!isMobile && <span className="btn-label">{t('langShort')}</span>}
       </button>
-      <button className="action-btn icon-only fullscreen-btn" onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
+      <button className={`action-btn fullscreen-btn ${isMobile ? 'icon-only' : ''}`} onClick={toggleFullscreen} title={isFullScreen ? t('exitFullscreen') : t('fullscreen')}>
         <span className="btn-icon">{isFullScreen ? '↙️' : '⛶'}</span>
+        {!isMobile && <span className="btn-label">{isFullScreen ? t('exitFullShort') : t('fullShort')}</span>}
       </button>
     </>
   );

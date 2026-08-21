@@ -276,6 +276,20 @@ html, body {
   border-radius: 50%;
 }
 
+/* Desktop header buttons: icon + short label, so the row doesn't read as an
+   unlabeled strip of symbols. icon-only (mobile flyout) never renders the
+   label span at all, so these never apply there. */
+.action-btn .btn-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.action-btn .btn-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .action-btn:hover {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.3);
