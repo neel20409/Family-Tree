@@ -35,15 +35,27 @@ async function resizeImageFile(file) {
   return blob || file;
 }
 
-export async function fetchAllOverrides() {
-  if (!isFirebaseConfigured) return new Map();
+// Live Firestore listener rather than a one-time fetch -- with the old
+// getDocs() snapshot, a photo/date edit only ever showed up for the visitor
+// who made it (via the optimistic local update in handleEditSaved); anyone
+// already on the page, in another tab, or who loaded before the edit
+// happened needed a manual reload to see it. onSnapshot pushes every
+// change to every open session as it happens, matching this project's
+// Firestore database being on the "Realtime updates: Enabled" setting.
+// Returns an unsubscribe function (a no-op if Firebase isn't configured).
+export async function subscribeToOverrides(callback) {
+  if (!isFirebaseConfigured) {
+    callback(new Map());
+    return () => {};
+  }
   const { db, firestore } = await getFirebase();
-  const snapshot = await firestore.getDocs(firestore.collection(db, 'memberEdits'));
-  const overrides = new Map();
-  snapshot.forEach((docSnap) => {
-    overrides.set(docSnap.id, docSnap.data());
+  return firestore.onSnapshot(firestore.collection(db, 'memberEdits'), (snapshot) => {
+    const overrides = new Map();
+    snapshot.forEach((docSnap) => {
+      overrides.set(docSnap.id, docSnap.data());
+    });
+    callback(overrides);
   });
-  return overrides;
 }
 
 export async function saveMemberEdit(id, { photoFile, birthDate, deathDate }) {
