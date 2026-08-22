@@ -3,7 +3,7 @@ import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import EditMemberModal from './EditMemberModal';
-import { fetchAllOverrides } from '../src/memberEdits';
+import { subscribeToOverrides } from '../src/memberEdits';
 import './TreeNode.css';
 
 // Translations object
@@ -737,13 +737,26 @@ const FamilyTreeApp = () => {
   const [brandLogoLoaded, setBrandLogoLoaded] = useState(false);
 
   // Shared, visitor-submitted photo/date overrides (Firestore), keyed by
-  // member id. Fetched once on mount; merged into a fresh copy of the
+  // member id. A live subscription, not a one-time fetch -- so a photo or
+  // date someone else just saved shows up here too, not just for whoever
+  // saved it, without needing a reload. Merged into a fresh copy of the
   // static tree below so every existing render path picks them up for free.
   const [overrides, setOverrides] = useState(() => new Map());
   const [editingMember, setEditingMember] = useState(null);
 
   useEffect(() => {
-    fetchAllOverrides().then(setOverrides).catch(() => {});
+    let unsubscribe = () => {};
+    let cancelled = false;
+    subscribeToOverrides((map) => {
+      if (!cancelled) setOverrides(map);
+    }).then((unsub) => {
+      if (cancelled) unsub();
+      else unsubscribe = unsub;
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const effectiveTree = useMemo(() => applyOverrides(familyTree, overrides), [overrides]);
