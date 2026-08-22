@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+import { motion, MotionConfig } from 'framer-motion';
 import familyTree from "../data/familyData";
 import confetti from 'canvas-confetti';
 import EditMemberModal from './EditMemberModal';
@@ -15,18 +15,12 @@ const translations = {
     born: "Born",
     passed: "Passed",
     sourceDocumentation: "Source Documentation",
-    name: "Name",
-    type: "Type",
-    date: "Date",
-    preview: "Preview",
     view: "View",
     nameNotFound: "Name not found in the family tree.",
     expandAll: "Expand All",
-    collapseAll: "Collapse All",
     resetZoom: "Reset Canvas",
     fullscreen: "Fullscreen",
     exitFullscreen: "Exit Fullscreen",
-    totalMembers: "Total Members",
     generation: "Gen",
     rootAncestor: "Root Ancestor",
     prevGen: "Prev Gen",
@@ -34,8 +28,6 @@ const translations = {
     playTour: "Play Tour",
     pauseTour: "Pause Tour",
     rootOnly: "Root Only",
-    focusMember: "Focus Member",
-    memberDetails: "Member Details",
     close: "Close",
     docsShort: "Docs",
     searchShort: "Search",
@@ -52,14 +44,12 @@ const translations = {
     editMember: "Edit Member",
     changePhoto: "Change Photo",
     birthDateLabel: "Birth Date",
-    deathStatus: "Status",
     deceased: "Deceased",
     living: "Living",
     unknown: "Unknown",
     save: "Save",
     saving: "Saving...",
     cancel: "Cancel",
-    editSaved: "Saved",
     helpTitle: "Demo: pinch or scroll to zoom, drag to pan"
   },
   gu: {
@@ -69,18 +59,12 @@ const translations = {
     born: "જન્મ",
     passed: "અવસાન",
     sourceDocumentation: "સ્રોત દસ્તાવેજીકરણ",
-    name: "નામ",
-    type: "પ્રકાર",
-    date: "તારીખ",
-    preview: "પૂર્વાવલોકન",
     view: "જુઓ",
     nameNotFound: "પરિવાર વૃક્ષમાં નામ મળ્યું નથી.",
     expandAll: "બધું વિસ્તારો",
-    collapseAll: "બધું સંકોચો",
     resetZoom: "કૅનવાસ રિસેટ કરો",
     fullscreen: "ફુલસ્ક્રીન",
     exitFullscreen: "ફુલસ્ક્રીનમાંથી બહાર નીકળો",
-    totalMembers: "કુલ સભ્યો",
     generation: "પીઢી",
     rootAncestor: "મૂળ પૂર્વજ",
     prevGen: "પાછલી પીઢી",
@@ -88,8 +72,6 @@ const translations = {
     playTour: "ટૂર શરુ કરો",
     pauseTour: "ટૂર થોભો",
     rootOnly: "માત્ર મૂળ",
-    focusMember: "કેન્દ્રિત કરો",
-    memberDetails: "સભ્ય વિગતો",
     close: "બંધ કરો",
     docsShort: "દસ્તાવેજ",
     searchShort: "શોધો",
@@ -106,14 +88,12 @@ const translations = {
     editMember: "સભ્ય સંપાદિત કરો",
     changePhoto: "ફોટો બદલો",
     birthDateLabel: "જન્મ તારીખ",
-    deathStatus: "સ્થિતિ",
     deceased: "અવસાન થયું",
     living: "જીવિત",
     unknown: "અજ્ઞાત",
     save: "સાચવો",
     saving: "સાચવી રહ્યા છીએ...",
     cancel: "રદ કરો",
-    editSaved: "સાચવ્યું",
     helpTitle: "ડેમો: ઝૂમ કરવા પિંચ કરો કે સ્ક્રોલ કરો, ફરવા ડ્રેગ કરો"
   }
 };
@@ -1250,6 +1230,29 @@ const FamilyTreeApp = () => {
     }
   };
 
+  // React makes onWheel passive by default (for scroll performance), so
+  // handleWheel's preventDefault() above silently no-ops when wired up the
+  // normal JSX way -- logging "Unable to preventDefault inside passive
+  // event listener invocation" on every single wheel tick. Harmless for a
+  // plain mouse-wheel scroll (html/body are already overflow:hidden, so
+  // there's nothing to scroll regardless), but a trackpad pinch or
+  // ctrl+wheel is also a wheel event, and THAT preventDefault is what
+  // stops the browser's own page-zoom from kicking in alongside this
+  // component's custom zoom. Attaching the listener natively with
+  // { passive: false } is the only way to make preventDefault actually
+  // take effect. Kept in a ref so the effect can stay mount-once (empty
+  // deps) without the listener closing over stale zoomLevel/pan.
+  const handleWheelRef = useRef(handleWheel);
+  handleWheelRef.current = handleWheel;
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const listener = (e) => handleWheelRef.current(e);
+    viewport.addEventListener('wheel', listener, { passive: false });
+    return () => viewport.removeEventListener('wheel', listener);
+  }, []);
+
   const getTouchDistance = (t1, t2) => {
     const dx = t1.clientX - t2.clientX;
     const dy = t1.clientY - t2.clientY;
@@ -1411,11 +1414,14 @@ const FamilyTreeApp = () => {
   );
 
   return (
-    // reducedMotion="user" makes every motion.div/AnimatePresence transition
-    // here respect the OS "reduce motion" accessibility setting -- without
-    // it, a user with that setting on would see content that starts at
-    // opacity:0 (our `initial` props) and never animates to visible, since
-    // the animation itself is what's supposed to reveal it.
+    // reducedMotion="user" makes every remaining motion.div transition here
+    // (tree node/children entrance, staggered source cards -- plain mount-in
+    // animations with no `exit`, so none of them have the AnimatePresence
+    // stuck-mounted problem the modals below were rewritten to avoid)
+    // respect the OS "reduce motion" accessibility setting -- without it, a
+    // user with that setting on would see content that starts at opacity:0
+    // (our `initial` props) and never animates to visible, since the
+    // animation itself is what's supposed to reveal it.
     <MotionConfig reducedMotion="user">
     <div className="app-container">
       {/* Subtle Static Clean Backdrop Gradient */}
@@ -1490,51 +1496,50 @@ const FamilyTreeApp = () => {
         </div>
       )}
 
-      {/* --- Thin Search Flyout: separate pill, appears only when the search icon is tapped --- */}
-      <AnimatePresence>
-        {searchBarOpen && (
-          <motion.div
-            className="search-flyout card-glass"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-          >
-            <form onSubmit={handleSearch} className="search-form">
-              <div className="search-input-wrapper">
-                <span className="search-icon">🔍</span>
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={e => {
-                    setSearchTerm(e.target.value);
-                    setSearchNotFound(false);
-                  }}
-                  autoFocus
-                />
-                {searchTerm && (
-                  <button type="button" className="clear-search-btn" onClick={handleClearSearch} aria-label="Clear">
-                    ✕
-                  </button>
-                )}
-              </div>
-              {searchNotFound && (
-                <span className="search-not-found">{t('nameNotFound')}</span>
+      {/* --- Thin Search Flyout: separate pill, appears only when the search icon is tapped.
+          Plain conditional render, not AnimatePresence/motion.div -- see the
+          Help Overlay comment further down for why: under prefers-reduced-motion,
+          the exit animation never completes, so AnimatePresence leaves the
+          dismissed element mounted (and, for the full-screen modals below,
+          silently blocking every click to the tree underneath). Entrance
+          animation now comes from the plain CSS `animation` on .search-flyout
+          instead. --- */}
+      {searchBarOpen && (
+        <div className="search-flyout card-glass">
+          <form onSubmit={handleSearch} className="search-form">
+            <div className="search-input-wrapper">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder={t('searchPlaceholder')}
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setSearchNotFound(false);
+                }}
+                autoFocus
+              />
+              {searchTerm && (
+                <button type="button" className="clear-search-btn" onClick={handleClearSearch} aria-label="Clear">
+                  ✕
+                </button>
               )}
-            </form>
-            <button
-              type="button"
-              className="search-flyout-close"
-              onClick={() => setSearchBarOpen(false)}
-              aria-label="Close search"
-            >
-              &times;
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+            {searchNotFound && (
+              <span className="search-not-found">{t('nameNotFound')}</span>
+            )}
+          </form>
+          <button
+            type="button"
+            className="search-flyout-close"
+            onClick={() => setSearchBarOpen(false)}
+            aria-label="Close search"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* --- Ultra-Minimalist Floating Bottom Controls Dock (Single Line Pill) --- */}
       <div className="controls-dock">
@@ -1624,80 +1629,62 @@ const FamilyTreeApp = () => {
       </footer>
 
       {/* --- Mobile Member Bottom Sheet Drawer --- */}
-      <AnimatePresence>
-        {isMobile && selectedMember && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setSelectedMember(null)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="mobile-member-sheet card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            >
-              <button className="modal-close" onClick={() => setSelectedMember(null)}>&times;</button>
-              <div className="member-sheet-header">
-                <div className="member-sheet-avatar">
-                  {selectedMember.photo ? (
-                    <img src={isPhotoURL(selectedMember.photo) ? selectedMember.photo : `${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
-                  ) : (
-                    <span>{selectedMember.name ? selectedMember.name.substring(0, 2).toUpperCase() : '??'}</span>
-                  )}
-                </div>
-                <div className="member-sheet-info">
-                  <span className="gen-pill">{selectedMemberLevel === 0 ? t('rootAncestor') : `${t('generation')} ${selectedMemberLevel}`}</span>
-                  <h2>{isGujarati && selectedMember.gujaratiName ? selectedMember.gujaratiName : selectedMember.name}</h2>
-                  {isGujarati && selectedMember.name && <span className="subname">{selectedMember.name}</span>}
-                </div>
+      {isMobile && selectedMember && (
+        <div className="modal-overlay" onClick={() => setSelectedMember(null)}>
+          <div className="mobile-member-sheet card-glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedMember(null)}>&times;</button>
+            <div className="member-sheet-header">
+              <div className="member-sheet-avatar">
+                {selectedMember.photo ? (
+                  <img src={isPhotoURL(selectedMember.photo) ? selectedMember.photo : `${getOptimizedPhotoBase(selectedMember.photo)}.jpg`} alt={selectedMember.name} />
+                ) : (
+                  <span>{selectedMember.name ? selectedMember.name.substring(0, 2).toUpperCase() : '??'}</span>
+                )}
               </div>
-
-              <div className="member-sheet-dates">
-                <div className="sheet-date-box">
-                  <span className="date-label">{t('born')}</span>
-                  <span className="date-val">{formatDate(selectedMember.birthDate, isGujarati)}</span>
-                </div>
-                <div className="sheet-date-box">
-                  <span className="date-label">{t('passed')}</span>
-                  <span className="date-val">{formatDate(selectedMember.deathDate, isGujarati)}</span>
-                </div>
+              <div className="member-sheet-info">
+                <span className="gen-pill">{selectedMemberLevel === 0 ? t('rootAncestor') : `${t('generation')} ${selectedMemberLevel}`}</span>
+                <h2>{isGujarati && selectedMember.gujaratiName ? selectedMember.gujaratiName : selectedMember.name}</h2>
+                {isGujarati && selectedMember.name && <span className="subname">{selectedMember.name}</span>}
               </div>
+            </div>
 
-              {selectedMember.photo && (
-                <button
-                  className="drawer-action-btn primary"
-                  onClick={() => {
-                    handlePhotoClick(isPhotoURL(selectedMember.photo) ? selectedMember.photo : getOptimizedPhotoBase(selectedMember.photo));
-                    setSelectedMember(null);
-                  }}
-                >
-                  📸 View Full Photo
-                </button>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="member-sheet-dates">
+              <div className="sheet-date-box">
+                <span className="date-label">{t('born')}</span>
+                <span className="date-val">{formatDate(selectedMember.birthDate, isGujarati)}</span>
+              </div>
+              <div className="sheet-date-box">
+                <span className="date-label">{t('passed')}</span>
+                <span className="date-val">{formatDate(selectedMember.deathDate, isGujarati)}</span>
+              </div>
+            </div>
+
+            {selectedMember.photo && (
+              <button
+                className="drawer-action-btn primary"
+                onClick={() => {
+                  handlePhotoClick(isPhotoURL(selectedMember.photo) ? selectedMember.photo : getOptimizedPhotoBase(selectedMember.photo));
+                  setSelectedMember(null);
+                }}
+              >
+                📸 View Full Photo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* --- Edit Member Modal (photo upload + birth/death date edit) --- */}
-      <AnimatePresence>
-        {editingMember && (
-          <EditMemberModal
-            member={editingMember}
-            currentPhotoSrc={editingMember.photo ? (isPhotoURL(editingMember.photo) ? editingMember.photo : `${getOptimizedPhotoBase(editingMember.photo)}.jpg`) : null}
-            isGujarati={isGujarati}
-            t={t}
-            onClose={() => setEditingMember(null)}
-            onSaved={handleEditSaved}
-          />
-        )}
-      </AnimatePresence>
+      {editingMember && (
+        <EditMemberModal
+          member={editingMember}
+          currentPhotoSrc={editingMember.photo ? (isPhotoURL(editingMember.photo) ? editingMember.photo : `${getOptimizedPhotoBase(editingMember.photo)}.jpg`) : null}
+          isGujarati={isGujarati}
+          t={t}
+          onClose={() => setEditingMember(null)}
+          onSaved={handleEditSaved}
+        />
+      )}
 
       {/* --- Infinite Seamless 2D Canvas Viewport --- */}
       <main
@@ -1707,7 +1694,6 @@ const FamilyTreeApp = () => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -1746,174 +1732,110 @@ const FamilyTreeApp = () => {
       </main>
 
       {/* --- Photo Lightbox Modal --- */}
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setModalOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="modal-content card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-            >
-              <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">&times;</button>
-              <div className="modal-body">
-                {isPhotoURL(modalImg) ? (
-                  <img src={modalImg} alt="Family Member" className="enlarged-image" />
-                ) : (
-                  <picture>
-                    <source srcSet={`${modalImg}.avif`} type="image/avif" />
-                    <source srcSet={`${modalImg}.webp`} type="image/webp" />
-                    <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
-                  </picture>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {modalOpen && (
+        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="modal-content card-glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">&times;</button>
+            <div className="modal-body">
+              {isPhotoURL(modalImg) ? (
+                <img src={modalImg} alt="Family Member" className="enlarged-image" />
+              ) : (
+                <picture>
+                  <source srcSet={`${modalImg}.avif`} type="image/avif" />
+                  <source srcSet={`${modalImg}.webp`} type="image/webp" />
+                  <img src={`${modalImg}.jpg`} alt="Family Member" className="enlarged-image" />
+                </picture>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- Source Documentation Modal --- */}
-      <AnimatePresence>
-        {sourceModalOpen && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setSourceModalOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="source-modal-content card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-            >
-              <button className="modal-close" onClick={() => setSourceModalOpen(false)} aria-label="Close">&times;</button>
-              <h2 className="source-modal-title">📜 {t('sourceDocumentation')}</h2>
-              <div className="source-grid">
-                {sources.map((src, idx) => (
-                  <motion.div
-                    key={idx}
-                    className="source-card"
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.06, duration: 0.3 }}
-                  >
-                    <div className="source-card-header">
-                      <span className="source-type-pill">{src.type}</span>
-                      <span className="source-date">{src.date}</span>
+      {sourceModalOpen && (
+        <div className="modal-overlay" onClick={() => setSourceModalOpen(false)}>
+          <div className="source-modal-content card-glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSourceModalOpen(false)} aria-label="Close">&times;</button>
+            <h2 className="source-modal-title">📜 {t('sourceDocumentation')}</h2>
+            <div className="source-grid">
+              {sources.map((src, idx) => (
+                <motion.div
+                  key={idx}
+                  className="source-card"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.06, duration: 0.3 }}
+                >
+                  <div className="source-card-header">
+                    <span className="source-type-pill">{src.type}</span>
+                    <span className="source-date">{src.date}</span>
+                  </div>
+                  <h3 className="source-title">{src.title}</h3>
+                  <p className="source-desc">{src.description}</p>
+                  <div className="source-thumbnail-container" onClick={() => setEnlargedSourceImage(src.image)}>
+                    <img
+                      src={src.image}
+                      alt={src.title}
+                      className="source-thumbnail"
+                      onError={(e) => handleImageError(e, src.rawPath || src.image)}
+                    />
+                    <div className="source-hover-overlay">
+                      <span>🔍 {t('view')}</span>
                     </div>
-                    <h3 className="source-title">{src.title}</h3>
-                    <p className="source-desc">{src.description}</p>
-                    <div className="source-thumbnail-container" onClick={() => setEnlargedSourceImage(src.image)}>
-                      <img 
-                        src={src.image} 
-                        alt={src.title} 
-                        className="source-thumbnail" 
-                        onError={(e) => handleImageError(e, src.rawPath || src.image)}
-                      />
-                      <div className="source-hover-overlay">
-                        <span>🔍 {t('view')}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- Enlarged Source Image Lightbox --- */}
-      <AnimatePresence>
-        {enlargedSourceImage && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setEnlargedSourceImage(null)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="modal-content card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-            >
-              <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
-              <div className="modal-body">
-                <img 
-                  src={enlargedSourceImage} 
-                  alt="Enlarged Document" 
-                  className="enlarged-image" 
-                  onError={(e) => handleImageError(e, enlargedSourceImage)}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {enlargedSourceImage && (
+        <div className="modal-overlay" onClick={() => setEnlargedSourceImage(null)}>
+          <div className="modal-content card-glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setEnlargedSourceImage(null)} aria-label="Close">&times;</button>
+            <div className="modal-body">
+              <img
+                src={enlargedSourceImage}
+                alt="Enlarged Document"
+                className="enlarged-image"
+                onError={(e) => handleImageError(e, enlargedSourceImage)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- Crest Logo Lightbox -- shows the raw, unfiltered logo (no drop-shadow, no watermark fade) --- */}
-      <AnimatePresence>
-        {logoModalOpen && (
-          <motion.div
-            className="modal-overlay"
-            onClick={() => setLogoModalOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <motion.div
-              className="modal-content card-glass"
-              onClick={e => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-            >
-              <button className="modal-close" onClick={() => setLogoModalOpen(false)} aria-label="Close">&times;</button>
-              <div className="modal-body">
-                {/* Same light-backdrop reasoning as the header: the crest's
-                    navy ink needs a light ground to read against, and the
-                    modal's own glass is dark. */}
-                <div className="crest-modal-frame">
-                  <img 
-                    src={getAssetPath('bhatt-family-logo.png')} 
-                    alt="Bhatt Family Crest" 
-                    className="enlarged-image"
-                    onError={(e) => {
-                      if (!e.target.dataset.triedFallback) {
-                        e.target.dataset.triedFallback = '1';
-                        e.target.src = '/bhatt-family-logo.png';
-                      } else if (e.target.dataset.triedFallback === '1') {
-                        e.target.dataset.triedFallback = '2';
-                        e.target.src = 'bhatt-family-logo.png';
-                      }
-                    }}
-                  />
-                </div>
+      {logoModalOpen && (
+        <div className="modal-overlay" onClick={() => setLogoModalOpen(false)}>
+          <div className="modal-content card-glass" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setLogoModalOpen(false)} aria-label="Close">&times;</button>
+            <div className="modal-body">
+              {/* Same light-backdrop reasoning as the header: the crest's
+                  navy ink needs a light ground to read against, and the
+                  modal's own glass is dark. */}
+              <div className="crest-modal-frame">
+                <img
+                  src={getAssetPath('bhatt-family-logo.png')}
+                  alt="Bhatt Family Crest"
+                  className="enlarged-image"
+                  onError={(e) => {
+                    if (!e.target.dataset.triedFallback) {
+                      e.target.dataset.triedFallback = '1';
+                      e.target.src = '/bhatt-family-logo.png';
+                    } else if (e.target.dataset.triedFallback === '1') {
+                      e.target.dataset.triedFallback = '2';
+                      e.target.src = 'bhatt-family-logo.png';
+                    }
+                  }}
+                />
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- First-visit Help Overlay: no card, no text -- just a ghost
           cursor performing the actual pinch/drag gesture while the real
