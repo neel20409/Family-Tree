@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { saveMemberEdit, validatePhotoFile } from '../src/memberEdits';
 import { isFirebaseConfigured } from '../src/firebase';
 
@@ -69,22 +68,15 @@ export default function EditMemberModal({ member, currentPhotoSrc, isGujarati, t
   };
 
   return (
-    <motion.div
-      className="modal-overlay"
-      onClick={onClose}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <motion.div
-        className="edit-member-modal card-glass"
-        onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-      >
+    // Plain conditional render at the call site (TreeNode.jsx), not
+    // AnimatePresence/motion.div: under prefers-reduced-motion, the exit
+    // animation here never completes, so AnimatePresence would leave this
+    // modal mounted (invisible, but still capturing every click over the
+    // whole screen) after closing -- for this app's core edit feature, on
+    // every Cancel/Save/X/backdrop click. Entrance animation now comes from
+    // the plain CSS `animation` already on .edit-member-modal.
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="edit-member-modal card-glass" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label={t('close')}>&times;</button>
         <h2>{t('editMember')}</h2>
         <p className="edit-member-name">{isGujarati && member.gujaratiName ? member.gujaratiName : member.name}</p>
@@ -149,7 +141,7 @@ export default function EditMemberModal({ member, currentPhotoSrc, isGujarati, t
             {saving ? t('saving') : t('save')}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
