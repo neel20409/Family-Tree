@@ -424,7 +424,7 @@ const familyTree = {
                                         {
                                           id: "darsh",
                                           name: "Darsh",
-                                          gujaratiName: "દર્શન",
+                                          gujaratiName: "દર્શ",
                                           photo: "/photos/darsh.avif",
                                           birthDate: "19 Jun 2017",
                                           deathDate: "--"
